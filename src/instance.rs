@@ -8,6 +8,8 @@ pub trait Instance : Debug + Send + Sync + 'static {
 
     fn create_framebuffer(&self, width: u32, height: u32) -> Arc<dyn Framebuffer>;
 
+    fn create_graphics_pipeline(&self) -> Arc<dyn GraphicsPipeline>;
+
     fn get_shader_manager(&self) -> Arc<dyn ShaderManager>;
 
     fn as_any(&self) -> &dyn Any;
@@ -46,6 +48,10 @@ mod tests {
 
         fn create_framebuffer(&self, _width: u32, _height: u32) -> Arc<dyn Framebuffer> {
             panic!("This dummy instance doesn't support framebuffers")
+        }
+
+        fn get_shader_manager(&self) -> Arc<dyn ShaderManager> {
+            panic!("This dummy instance doesn't support shaders")
         }
     }
 
