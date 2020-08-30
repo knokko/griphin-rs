@@ -1,11 +1,11 @@
 mod data;
-mod framebuffer;
+mod grid;
 mod instance;
 mod pipeline;
 mod shader;
 
 pub use data::*;
-pub use framebuffer::*;
+pub use grid::*;
 pub use instance::*;
 pub use pipeline::*;
 pub use shader::*;
