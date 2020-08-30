@@ -4,8 +4,7 @@ use std::any::Any;
 use std::fmt::Debug;
 use std::sync::Arc;
 
-pub trait Instance : Debug + Send + Sync + 'static {
-
+pub trait Instance: Debug + Send + Sync + 'static {
     fn get_shader_manager(&self) -> Arc<dyn ShaderManager>;
 
     fn as_any(&self) -> &dyn Any;
@@ -19,25 +18,23 @@ mod tests {
 
     #[derive(Debug)]
     struct DummyInstance {
-
-        number: u8
+        number: u8,
     }
 
     impl DummyInstance {
-        
         fn new(number: u8) -> Arc<Self> {
-            Arc::new(Self {
-                number
-            })
+            Arc::new(Self { number })
         }
 
-        fn downcast<R>(instance: Arc<dyn Instance>, use_function: &mut dyn FnMut(&DummyInstance) -> R) -> R {
+        fn downcast<R>(
+            instance: Arc<dyn Instance>,
+            use_function: &mut dyn FnMut(&DummyInstance) -> R,
+        ) -> R {
             use_function(instance.as_any().downcast_ref::<DummyInstance>().unwrap())
         }
     }
 
     impl Instance for DummyInstance {
-
         fn as_any(&self) -> &dyn Any {
             self
         }

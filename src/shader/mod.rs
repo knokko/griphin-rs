@@ -12,7 +12,6 @@ pub use pair::*;
 pub use variable::*;
 
 pub trait Shader: Debug + Send + Sync + 'static {
-
     fn as_any(&self) -> &dyn Any;
 
     fn get_debug_name(&self) -> &str;

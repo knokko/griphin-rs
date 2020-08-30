@@ -1,12 +1,10 @@
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub struct DataKind {
-
     long_name: &'static str,
-    short_name: &'static str
+    short_name: &'static str,
 }
 
 impl DataKind {
-
     pub fn get_long_name(&self) -> &'static str {
         self.long_name
     }
@@ -17,7 +15,10 @@ impl DataKind {
 }
 
 const fn data_kind(long_name: &'static str, short_name: &'static str) -> DataKind {
-    DataKind {long_name, short_name}
+    DataKind {
+        long_name,
+        short_name,
+    }
 }
 
 pub const INT: DataKind = data_kind("int", "i");
@@ -26,13 +27,11 @@ pub const BOOL: DataKind = data_kind("bool", "b");
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub struct DataShape {
-
     raw_name: &'static str,
-    size: u8
+    size: u8,
 }
 
 impl DataShape {
-
     pub fn get_raw_name(&self) -> &'static str {
         self.raw_name
     }
@@ -43,7 +42,7 @@ impl DataShape {
 }
 
 const fn data_shape(raw_name: &'static str, size: u8) -> DataShape {
-    DataShape {raw_name, size}
+    DataShape { raw_name, size }
 }
 
 pub const SINGLE: DataShape = data_shape("", 1);
@@ -55,13 +54,11 @@ pub const MAT4: DataShape = data_shape("mat4", 16);
 
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub struct DataType {
-
     kind: DataKind,
-    shape: DataShape
+    shape: DataShape,
 }
 
 impl DataType {
-
     pub fn new(kind: DataKind, shape: DataShape) -> DataType {
         DataType { kind, shape }
     }

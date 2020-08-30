@@ -2,15 +2,13 @@ use crate::*;
 
 #[derive(Clone, Debug)]
 pub struct ShaderVariable {
-
     name: String,
-    data_type: DataType
+    data_type: DataType,
 }
 
 impl ShaderVariable {
-
     pub fn new(name: String, data_type: DataType) -> ShaderVariable {
-        ShaderVariable {name, data_type}
+        ShaderVariable { name, data_type }
     }
 
     pub fn get_name(&self) -> &str {
@@ -23,22 +21,22 @@ impl ShaderVariable {
 }
 
 pub struct ShaderVariables {
-
     inputs: Vec<ShaderVariable>,
     instanced_inputs: Vec<ShaderVariable>,
     outputs: Vec<ShaderVariable>,
-    uniforms: Vec<ShaderVariable>
+    uniforms: Vec<ShaderVariable>,
 }
 
 impl ShaderVariables {
-
-    pub fn new<I>(inputs: I, instanced_inputs: I, outputs: I, uniforms: I) -> ShaderVariables 
-    where I: IntoIterator<Item=ShaderVariable>, {
+    pub fn new<I>(inputs: I, instanced_inputs: I, outputs: I, uniforms: I) -> ShaderVariables
+    where
+        I: IntoIterator<Item = ShaderVariable>,
+    {
         ShaderVariables {
             inputs: inputs.into_iter().collect(),
             instanced_inputs: instanced_inputs.into_iter().collect(),
             outputs: outputs.into_iter().collect(),
-            uniforms: uniforms.into_iter().collect()
+            uniforms: uniforms.into_iter().collect(),
         }
     }
 

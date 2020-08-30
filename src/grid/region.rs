@@ -1,16 +1,19 @@
 #[derive(Clone, Copy, Debug)]
 pub struct GridRegion {
-
     min_x: u32,
     min_y: u32,
     width: u32,
-    height: u32
+    height: u32,
 }
 
 impl GridRegion {
-
     pub fn new(min_x: u32, min_y: u32, width: u32, height: u32) -> Self {
-        Self { min_x, min_y, width, height }
+        Self {
+            min_x,
+            min_y,
+            width,
+            height,
+        }
     }
 
     pub fn get_min_x(&self) -> u32 {
