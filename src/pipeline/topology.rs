@@ -1,12 +1,3 @@
-use crate::*;
-
-use std::any::Any;
-
-pub trait GraphicsPipeline {
-
-    fn as_any(&self) -> &dyn Any;
-}
-
 pub enum PrimitiveTopology {
 
     Points,

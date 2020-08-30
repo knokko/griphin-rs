@@ -8,7 +8,7 @@ pub trait Instance : Debug + Send + Sync + 'static {
 
     fn create_framebuffer(&self, width: u32, height: u32) -> Arc<dyn Framebuffer>;
 
-    fn create_graphics_pipeline(&self) -> Arc<dyn GraphicsPipeline>;
+    fn get_pipeline_manager(&self) -> Arc<dyn PipelineManager>;
 
     fn get_shader_manager(&self) -> Arc<dyn ShaderManager>;
 

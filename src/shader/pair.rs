@@ -1,99 +1,31 @@
 use crate::*;
 
-use std::any::Any;
 use std::error::Error;
-use std::fmt::{Debug, Display, Formatter};
+use std::fmt::{Display, Formatter};
 use std::sync::Arc;
-
-pub trait ShaderManager: Debug + Send + Sync + 'static {
-
-    fn as_any(&self) -> &dyn Any;
-
-    fn create_shader(&self, debug_name: &str, main_function: &str, variables: ShaderVariables, 
-        libraries: Vec<Arc<dyn ShaderLibrary>>) -> Arc<dyn Shader>;
-
-    fn create_library(&self, debug_name: &str, functions: &str) -> Arc<dyn ShaderLibrary>;
-}
-
-pub trait Shader: Debug + Send + Sync + 'static {
-
-    fn as_any(&self) -> &dyn Any;
-
-    fn get_debug_name(&self) -> &str;
-
-    fn get_variables(&self) -> &ShaderVariables;
-}
-
-pub trait ShaderLibrary: Debug + Send + Sync + 'static {
-
-    fn as_any(&self) -> &dyn Any;
-
-    fn make_global(&self);
-}
-
-#[derive(Clone, Debug)]
-pub struct ShaderVariable {
-
-    name: String,
-    data_type: DataType
-}
-
-impl ShaderVariable {
-
-    pub fn new(name: String, data_type: DataType) -> ShaderVariable {
-        ShaderVariable {name, data_type}
-    }
-
-    pub fn get_name(&self) -> &str {
-        &self.name
-    }
-
-    pub fn get_type(&self) -> DataType {
-        self.data_type
-    }
-}
-
-pub struct ShaderVariables {
-
-    inputs: Vec<ShaderVariable>,
-    instanced_inputs: Vec<ShaderVariable>,
-    outputs: Vec<ShaderVariable>,
-    uniforms: Vec<ShaderVariable>
-}
-
-impl ShaderVariables {
-
-    pub fn new<I>(inputs: I, instanced_inputs: I, outputs: I, uniforms: I) -> ShaderVariables 
-    where I: IntoIterator<Item=ShaderVariable>, {
-        ShaderVariables {
-            inputs: inputs.into_iter().collect(),
-            instanced_inputs: instanced_inputs.into_iter().collect(),
-            outputs: outputs.into_iter().collect(),
-            uniforms: uniforms.into_iter().collect()
-        }
-    }
-
-    pub fn get_inputs(&self) -> &Vec<ShaderVariable> {
-        &self.inputs
-    }
-
-    pub fn get_instanced_inputs(&self) -> &Vec<ShaderVariable> {
-        &self.instanced_inputs
-    }
-
-    pub fn get_outputs(&self) -> &Vec<ShaderVariable> {
-        &self.outputs
-    }
-
-    pub fn get_uniforms(&self) -> &Vec<ShaderVariable> {
-        &self.uniforms
-    }
-}
 
 pub struct ShaderPair {
 
     vertex_shader: Arc<dyn Shader>,
     fragment_shader: Arc<dyn Shader>
+}
+
+impl ShaderPair {
+
+    pub fn new(vertex_shader: &Arc<dyn Shader>, fragment_shader: &Arc<dyn Shader>) -> Self {
+        Self {
+            vertex_shader: Arc::clone(vertex_shader),
+            fragment_shader: Arc::clone(fragment_shader)
+        }
+    }
+
+    pub fn get_vertex_shader(&self) -> &Arc<dyn Shader> {
+        &self.vertex_shader
+    }
+
+    pub fn get_fragment_shader(&self) -> &Arc<dyn Shader> {
+        &self.fragment_shader
+    }
 }
 
 #[derive(Debug)]
