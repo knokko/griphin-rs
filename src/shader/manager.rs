@@ -11,7 +11,7 @@ pub trait ShaderManager: Debug + Send + Sync + 'static {
         &self,
         debug_name: &str,
         main_function: &str,
-        variables: ShaderVariables,
+        variables: Vec<ShaderVariable>,
         libraries: Vec<Arc<dyn ShaderLibrary>>,
     ) -> Arc<dyn Shader>;
 

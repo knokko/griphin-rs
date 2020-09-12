@@ -1,4 +1,8 @@
-pub trait ColorGrid {}
+use std::any::Any;
+
+pub trait ColorGrid {
+    fn as_any(&self) -> &dyn Any;
+}
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum ColorStartOperation {
@@ -14,4 +18,10 @@ pub enum ColorPurpose {
     ShaderRead,
     Transfer, // Transfer source
     Replace,  // Transfer destination
+}
+
+pub struct ColorGridBuilder {
+
+    pub start_operation: ColorStartOperation,
+    pub purpose: ColorPurpose
 }

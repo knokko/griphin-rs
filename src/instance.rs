@@ -7,6 +7,8 @@ use std::sync::Arc;
 pub trait Instance: Debug + Send + Sync + 'static {
     fn get_shader_manager(&self) -> Arc<dyn ShaderManager>;
 
+    fn create_abstract_grid_group(&self, builder: &AbstractGridGroupBuilder) -> Arc<dyn AbstractGridGroup>;
+
     fn as_any(&self) -> &dyn Any;
 }
 

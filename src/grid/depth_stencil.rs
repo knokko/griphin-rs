@@ -16,3 +16,9 @@ pub enum DepthStencilPurpose {
     Transfer, // Transfer source
     Replace,  // Transfer destination
 }
+
+pub struct DepthStencilGridBuilder {
+
+    pub start_operation: DepthStencilStartOperation,
+    pub purpose: DepthStencilPurpose
+}

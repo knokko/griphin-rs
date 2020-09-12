@@ -16,5 +16,5 @@ pub trait Shader: Debug + Send + Sync + 'static {
 
     fn get_debug_name(&self) -> &str;
 
-    fn get_variables(&self) -> &ShaderVariables;
+    fn get_variables(&self) -> &Vec<ShaderVariable>;
 }

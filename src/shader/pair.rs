@@ -91,11 +91,17 @@ impl ShaderPair {
     fn match_shader_variables_types(
         variables1: &Vec<ShaderVariable>,
         variables2: &Vec<ShaderVariable>,
+        filter1: impl Fn(&ShaderVariable) -> bool,
+        filter2: impl Fn(&ShaderVariable) -> bool
     ) -> Result<(), (ShaderVariable, ShaderVariable)> {
         for var1 in variables1 {
-            for var2 in variables2 {
-                if var1.get_name() == var2.get_name() && var1.get_type() != var2.get_type() {
-                    return Err((var1.clone(), var2.clone()));
+            if filter1(var1) {
+                for var2 in variables2 {
+                    if filter2(var2) {
+                        if var1.get_name() == var2.get_name() && var1.get_data_type() != var2.get_data_type() {
+                            return Err((var1.clone(), var2.clone()));
+                        }
+                    }
                 }
             }
         }
@@ -124,9 +130,10 @@ impl ShaderPair {
         Ok(())
     }
 
-    fn extract_names(variables: &Vec<ShaderVariable>) -> Vec<String> {
+    fn extract_names(variables: &Vec<ShaderVariable>, filter: impl Fn(&ShaderVariable) -> bool) -> Vec<String> {
         variables
             .into_iter()
+            .filter(|variable| filter(variable))
             .map(|variable| variable.get_name().to_string())
             .collect()
     }
@@ -136,8 +143,10 @@ impl ShaderPair {
         fragment_shader: &Arc<dyn Shader>,
     ) -> Result<Self, ShaderLinkError<ShaderNameLinkError>> {
         let maybe_type_mismatch = Self::match_shader_variables_types(
-            vertex_shader.get_variables().get_outputs(),
-            fragment_shader.get_variables().get_inputs(),
+            vertex_shader.get_variables(),
+            fragment_shader.get_variables(),
+            |var| var.get_variable_type() == ShaderVariableType::Output,
+            |var| var.get_variable_type() == ShaderVariableType::Input
         );
         if maybe_type_mismatch.is_err() {
             let type_mismatch = maybe_type_mismatch.unwrap_err();
@@ -151,9 +160,14 @@ impl ShaderPair {
             ));
         }
 
-        let vertex_output_names = Self::extract_names(vertex_shader.get_variables().get_outputs());
-        let fragment_input_names =
-            Self::extract_names(fragment_shader.get_variables().get_inputs());
+        let vertex_output_names = Self::extract_names(
+            vertex_shader.get_variables(),
+            |variable| variable.get_variable_type() == ShaderVariableType::Output
+        );
+        let fragment_input_names = Self::extract_names(
+            fragment_shader.get_variables(),
+            |variable| variable.get_variable_type() == ShaderVariableType::Input
+        );
 
         let maybe_miss_fragment =
             Self::match_shader_variable_names(&vertex_output_names, &fragment_input_names);
