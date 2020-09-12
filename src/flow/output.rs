@@ -10,6 +10,6 @@ pub struct NodeOutput {
 #[derive(Clone)]
 pub enum NodeOutputDestination {
 
-    Internal(GridState),
+    Internal(GridNodeID),
     External(Grid)
 }
