@@ -25,6 +25,6 @@ pub trait GridGroup {
 
 pub struct AbstractGridGroupBuilder {
 
-    pub color_grids: Vec<ColorGridBuilder>,
-    pub depth_stencil_grids: Vec<DepthStencilGridBuilder>
+    pub color_grids: Vec<AbstractColorGridBuilder>,
+    pub depth_stencil_grids: Vec<AbstractDepthStencilGridBuilder>
 }
