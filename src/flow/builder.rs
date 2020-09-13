@@ -78,7 +78,7 @@ impl RenderFlowBuilder {
     pub fn add_grid_node(&mut self, grid: &Grid) -> GridNodeID {
         let node = GridNodeBuilder::new(GridNodeID { flow_id: self.id, own_id: self.next_grid_state_id}, grid);
         self.next_grid_state_id += 1;
-        let id = node.id;
+        let id = node.get_id();
         self.grid_nodes.push(node);
         id
     }
