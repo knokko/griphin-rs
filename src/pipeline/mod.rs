@@ -10,4 +10,6 @@ pub use topology::*;
 
 pub trait GraphicsPipeline {
     fn as_any(&self) -> &dyn Any;
+
+    fn get_external_variables(&self) -> &Vec<ExternalShaderVariable>;
 }
