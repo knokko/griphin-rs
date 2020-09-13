@@ -42,7 +42,11 @@ mod tests {
         }
 
         fn get_shader_manager(&self) -> Arc<dyn ShaderManager> {
-            panic!("This dummy instance doesn't support shaders")
+            unimplemented!()
+        }
+
+        fn create_abstract_grid_group(&self, _builder: &AbstractGridGroupBuilder) -> Arc<dyn AbstractGridGroup> {
+            unimplemented!()
         }
     }
 
