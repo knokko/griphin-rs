@@ -10,7 +10,9 @@ pub trait AbstractGridGroup {
 
     fn create_graphics_pipeline(&self, shaders: &ShaderPair, topology: PrimitiveTopology) -> Arc<dyn GraphicsPipeline>;
 
-    fn create_render_flow(&self) -> Arc<dyn RenderFlow>;
+    fn create_render_flow_builder(&self) -> RenderFlowBuilder;
+
+    fn create_render_flow(&self, builder: RenderFlowBuilder) -> Arc<dyn RenderFlow>;
 }
 
 pub trait GridGroup {
