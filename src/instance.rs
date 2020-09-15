@@ -45,7 +45,7 @@ mod tests {
             unimplemented!()
         }
 
-        fn create_abstract_grid_group(&self, _builder: &AbstractGridGroupBuilder) -> Arc<dyn AbstractGridGroup> {
+        fn create_abstract_grid_group(&self, _builder: &AbstractGridGroupBuilder) -> (Arc<dyn AbstractGridGroup>, GridGroupIDs) {
             unimplemented!()
         }
     }
