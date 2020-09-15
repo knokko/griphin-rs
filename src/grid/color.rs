@@ -1,8 +1,12 @@
+use crate::*;
+
 use std::any::Any;
 
 // TODO Make this trait actually usable
 pub trait ColorGrid {
     fn as_any(&self) -> &dyn Any;
+
+    fn debug_dump(&self) -> ColorGridDump;
 }
 
 /// Every *ColorGrid(Builder)* has an associated *ColorStartOperation*. This
@@ -56,7 +60,7 @@ pub enum ColorPurpose {
 
 /// A struct that contains the information necessary to create an
 /// *AbstractColorGrid*. They have a *ColorStartOperation* and a *ColorPurpose*,
-/// which define what should happen with the color grids at the beginning and
+/// which define what should happen with the color grid at the beginning and
 /// the end of *RenderFlow*s. See the documentation of these two types for more
 /// information.
 /// 
