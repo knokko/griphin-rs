@@ -6,7 +6,7 @@ use std::any::Any;
 pub trait ColorGrid {
     fn as_any(&self) -> &dyn Any;
 
-    fn debug_dump(&self) -> ColorGridDump;
+    fn debug_dump(&self, region: GridRegion) -> ColorGridDump;
 }
 
 /// Every *ColorGrid(Builder)* has an associated *ColorStartOperation*. This

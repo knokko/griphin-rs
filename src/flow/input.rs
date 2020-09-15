@@ -17,14 +17,14 @@ pub enum DrawingNodeInputSource {
 
     /// The input values should be cleared to some fixed value, which can be
     /// chosen at runtime.
-    Cleared(Grid),
+    Cleared(AbstractGridID),
 
     /// The input values should come from a grid node (of the same render flow).
     Internal(GridNodeID), 
 
     /// A source from outside the render flow should ensure the input values are
     /// stored in the given grid before the flow starts.
-    External(Grid),
+    External(AbstractGridID),
 
     /// The input values are attributes of the Model that is about to be drawn.
     Model,

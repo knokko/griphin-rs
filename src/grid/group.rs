@@ -66,9 +66,9 @@ pub trait GridGroup {
     fn as_any(&self) -> &dyn Any;
 
     // TODO Stabilize the use cases of individual grids
-    fn get_color_grid(&self, id: GridID) -> Arc<dyn ColorGrid>;
+    fn get_color_grid(&self, id: AbstractGridID) -> Arc<dyn ColorGrid>;
 
-    fn get_depth_stencil_grid(&self, id: GridID) -> Arc<dyn DepthStencilGrid>;
+    fn get_depth_stencil_grid(&self, id: AbstractGridID) -> Arc<dyn DepthStencilGrid>;
 }
 
 /// *AbstractGridGroupBuilder* structs contain the information needed to create
@@ -89,4 +89,25 @@ pub struct AbstractGridGroupBuilder {
     /// A *Vec* containing all abstract depth stencil grids the abstract grid group
     /// should get.
     pub depth_stencil_grids: Vec<AbstractDepthStencilGridBuilder>
+}
+
+/// An instance of this struct is returned alongside its corresponding
+/// *AbstractGridGroup* by the *create_abstract_grid_group* method of the
+/// *Instance*.
+/// 
+/// This struct is needed by the user to find out which *AbstractGridID*s were
+/// assigned to which *AbstractColorGridBuilder*s and which
+/// *AbstractDepthStencilGridBuilder*s. This is the only reliable way in
+/// which the user can get the right *AbstractGridID*s, so these should *not*
+/// be forgotten.
+/// 
+/// The *colors* component of this struct corresponds to the *color_grids*
+/// component of the *AbstractGridGroupBuilder*: the id that got assigned
+/// to *color_grids[i]* is stored in *colors[i]* (for all 0 <= i < 
+/// *color_grids.len()*). Similarly, the id that got assigned to 
+/// *depth_stencil_grids[i]* is stored in *depth_stencils[i]*.
+pub struct GridGroupIDs {
+
+    pub colors: Vec<AbstractGridID>,
+    pub depth_stencils: Vec<AbstractGridID>
 }

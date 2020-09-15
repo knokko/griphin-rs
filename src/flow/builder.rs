@@ -70,12 +70,12 @@ impl RenderFlowBuilder {
         self.drawing_nodes.push(node);
     }
 
-    /// Adds a new grid node using the given *Grid* to this *RenderFlowBuilder*
-    /// (and thus to the future *RenderFlow*). The id of the newly added
-    /// grid node will be returned, because you will need this id when constructing
-    /// the inputs and outputs of the drawing nodes. See the documentation of this
-    /// struct for more information about grid nodes.
-    pub fn add_grid_node(&mut self, grid: &Grid) -> GridNodeID {
+    /// Adds a new grid node using the grid with the given *GridID* to this 
+    /// *RenderFlowBuilder* (and thus to the future *RenderFlow*). The id of 
+    /// the newly added grid node will be returned, because you will need this 
+    /// id when constructing the inputs and outputs of the drawing nodes. See 
+    /// the documentation of this struct for more information about grid nodes.
+    pub fn add_grid_node(&mut self, grid: AbstractGridID) -> GridNodeID {
         let node = GridNodeBuilder::new(GridNodeID { flow_id: self.id, own_id: self.next_grid_state_id}, grid);
         self.next_grid_state_id += 1;
         let id = node.get_id();

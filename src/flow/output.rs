@@ -28,5 +28,5 @@ pub enum DrawingNodeOutputDestination {
     /// somewhere outside the current render flow, but it's not the concern of this
     /// node or of the render flow what its purpose is. This could for instance be
     /// used as external input for another render flow or be presented to the screen.
-    External(Grid)
+    External(AbstractGridID)
 }

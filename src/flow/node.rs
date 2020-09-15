@@ -46,18 +46,18 @@ pub trait GridNode {
 #[derive(Clone)]
 pub struct GridNodeBuilder {
 
-    grid: Grid,
+    grid: AbstractGridID,
     id: GridNodeID
 }
 
 impl GridNodeBuilder {
 
-    pub(super) fn new(id: GridNodeID, grid: &Grid) -> Self {
+    pub(super) fn new(id: GridNodeID, grid: AbstractGridID) -> Self {
         GridNodeBuilder { id, grid: grid.clone()}
     }
 
-    pub fn get_grid(&self) -> &Grid {
-        &self.grid
+    pub fn get_grid(&self) -> AbstractGridID {
+        self.grid
     }
 
     pub fn get_id(&self) -> GridNodeID {
