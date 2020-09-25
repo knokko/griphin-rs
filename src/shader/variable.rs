@@ -35,8 +35,8 @@ pub struct VertexShaderVariable {
 }
 
 impl VertexShaderVariable {
-    pub fn new(name: String, data_type: DataType, variable_type: VertexShaderVariableType) -> Self {
-        Self { name, data_type, variable_type }
+    pub fn new(name: &str, data_type: DataType, variable_type: VertexShaderVariableType) -> Self {
+        Self { name: name.to_string(), data_type, variable_type }
     }
 
     pub fn get_name(&self) -> &str {
