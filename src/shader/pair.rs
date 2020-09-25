@@ -4,6 +4,20 @@ use std::error::Error;
 use std::fmt::{Display, Formatter};
 use std::sync::Arc;
 
+/// Represents a pair of a *VertexShader* and *FragmentShader* that can be used to
+/// create a *GraphicsPipeline*.
+/// 
+/// To create a *ShaderPair*, use one of the *link* functions of this struct
+/// (currently, only the *link_by_attribute_names* function is available).
+/// 
+/// Upon creating a *ShaderPair*, some validation checks will be done to ensure that
+/// the vertex shader *matches* the fragment shader (for instance, the fragment
+/// shader should have a *VertexInput* variable for every *FragmentOutput* variable
+/// of the vertex shader).
+/// 
+/// Also, the *External* shader variables of the vertex shader and the fragment
+/// shader are collected upon creating a *ShaderPair*. This is done at this point
+/// because all serious Griphin implementations will need this information anyway.
 pub struct ShaderPair {
     vertex_shader: Arc<dyn VertexShader>,
     fragment_shader: Arc<dyn FragmentShader>,
@@ -12,10 +26,10 @@ pub struct ShaderPair {
 }
 
 impl ShaderPair {
-    pub fn new(
+    fn new<E: Error>(
         vertex_shader: &Arc<dyn VertexShader>,
         fragment_shader: &Arc<dyn FragmentShader>,
-    ) -> Self {
+    ) -> Result<Self, ShaderLinkError<E>> {
         let mut external_variables = Vec::new();
         for variable in vertex_shader.get_variables() {
             match variable.get_variable_type() {
@@ -32,42 +46,91 @@ impl ShaderPair {
         for variable in fragment_shader.get_variables() {
             match variable.get_variable_type() {
                 FragmentShaderVariableType::External(ext) => {
-                    external_variables.push(ExternalShaderVariable::new(
-                        variable.get_name().to_string(),
-                        variable.get_data_type(),
-                        ext,
-                    ))
+
+                    let vertex_variable = external_variables.iter().find(
+                        |candidate| candidate.get_name() == variable.get_name()
+                    );
+
+                    match vertex_variable {
+                        Some(found_it) => {
+                            if found_it.get_data_type() != variable.get_data_type() {
+                                return Err(ShaderLinkError::general(
+                                    vertex_shader.as_ref(), fragment_shader.as_ref(), 
+                                    ShaderExternalVariableMismatch::new(
+                                        variable.get_name(), 
+                                        found_it.get_data_type(), 
+                                        variable.get_data_type()
+                                    )
+                                ));
+                            }
+                        }, None => {
+                            external_variables.push(ExternalShaderVariable::new(
+                                variable.get_name().to_string(),
+                                variable.get_data_type(),
+                                ext,
+                            ));
+                        }
+                    };
+
+                    
                 }
                 _ => {}
             };
         }
         external_variables.shrink_to_fit();
-        Self {
+        Ok(Self {
             vertex_shader: Arc::clone(vertex_shader),
             fragment_shader: Arc::clone(fragment_shader),
             external_variables,
-        }
+        })
     }
 
+    /// Gets a reference to the *VertexShader* of this *ShaderPair*.
     pub fn get_vertex_shader(&self) -> &Arc<dyn VertexShader> {
         &self.vertex_shader
     }
 
+    /// Gets a reference to the *FragmentShader* of this *ShaderPair*.
     pub fn get_fragment_shader(&self) -> &Arc<dyn FragmentShader> {
         &self.fragment_shader
     }
 
+    /// Gets a reference to the *Vec* holding the collected *External* variables of
+    /// the shaders. If you consider the external variables of both shaders as a
+    /// set, this will give the union of the two sets.
     pub fn get_external_variables(&self) -> &Vec<ExternalShaderVariable> {
         &self.external_variables
     }
 }
 
+// TODO Rewrite documentation a little
+/// This error indicates that a *VertexShader* couldn't be linked to a certain
+/// *FragmentShader*. The reason depends on the generic type E (and different
+/// linking functions can return different types of errors).
 #[derive(Debug)]
 pub struct ShaderLinkError<E: Error> {
     vertex_name: String,
     fragment_name: String,
 
-    error: E,
+    error: ShaderLinkErrorType<E>,
+}
+
+// TODO Write docs
+#[derive(Debug)]
+pub enum ShaderLinkErrorType<E: Error> {
+
+    General(ShaderExternalVariableMismatch),
+    Specific(E)
+}
+
+impl<E: Error> Display for ShaderLinkErrorType<E> {
+
+    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+        match self {
+            Self::General(general) => general.fmt(f),
+            Self::Specific(specific) => Display::fmt(specific, f)
+        }
+    }
 }
 
 impl<E: Error> Display for ShaderLinkError<E> {
@@ -83,7 +146,7 @@ impl<E: Error> Display for ShaderLinkError<E> {
 impl<E: Error> Error for ShaderLinkError<E> {}
 
 impl<E: Error> ShaderLinkError<E> {
-    pub fn new(
+    fn specific(
         vertex_shader: &dyn VertexShader,
         fragment_shader: &dyn FragmentShader,
         error: E,
@@ -91,19 +154,62 @@ impl<E: Error> ShaderLinkError<E> {
         Self {
             vertex_name: vertex_shader.get_debug_name().to_string(),
             fragment_name: fragment_shader.get_debug_name().to_string(),
-            error,
+            error: ShaderLinkErrorType::Specific(error),
         }
     }
+
+    fn general(
+        vertex_shader: &dyn VertexShader,
+        fragment_shader: &dyn FragmentShader,
+        error: ShaderExternalVariableMismatch,
+    ) -> Self {
+        Self {
+            vertex_name: vertex_shader.get_debug_name().to_string(),
+            fragment_name: fragment_shader.get_debug_name().to_string(),
+            error: ShaderLinkErrorType::General(error),
+        }
+    }
+
+    /// Gets the *debug_name* of the *VertexShader* that wasn't linked successfully.
+    pub fn get_vertex_name(&self) -> &str {
+        &self.vertex_name
+    }
+
+    /// Gets the *debug_name* of the *FragmentShader* that wasn't linked successfully.
+    pub fn get_fragment_name(&self) -> &str {
+        &self.fragment_name
+    }
+
+    /// Gets the error that occurred while trying to link the vertex shader to the
+    /// fragment shader.
+    pub fn get_error(&self) -> &ShaderLinkErrorType<E> {
+        &self.error
+    }
 }
+
+/// This error indicates that an attempt was made to link some vertex shader to some
+/// fragment shader by the names of their inputs and outputs, but that this failed.
+/// 
+/// There are multiple reasons such an attempt could fail, and each option of this
+/// enum describes one such reason. See the options of this enum for more 
+/// information.
 #[derive(Debug)]
 pub enum ShaderNameLinkError {
+    /// The vertex shader has an output with the same name as an input of the
+    /// fragment shader, but they have different types. For instance, the vertex
+    /// shader has an output with name "x" and type *float*, but the fragment
+    /// shader has an input with name "x" and type *int*.
     TypeMismatch {
         vertex_output: VertexShaderVariable,
         fragment_input: FragmentShaderVariable,
     },
+    /// The vertex shader has an output variable (that has a name), but the fragment 
+    /// shader doesn't have an input variable with that same name.
     MissingFragmentInput {
         vertex_output_name: String,
     },
+    /// The fragment shader has an input variable (that has a name), but the vertex
+    /// shader doesn't have an output variable with that same name.
     MissingVertexOutput {
         fragment_input_name: String,
     },
@@ -126,6 +232,48 @@ impl Display for ShaderNameLinkError {
 }
 
 impl Error for ShaderNameLinkError {}
+
+// TODO Document this
+#[derive(Debug)]
+pub struct ShaderExternalVariableMismatch {
+
+    name: String,
+    vertex_type: DataType,
+    fragment_type: DataType
+}
+
+impl ShaderExternalVariableMismatch {
+
+    fn new(name: &str, vertex_type: DataType, fragment_type: DataType) -> Self {
+        Self { name: name.to_string(), vertex_type, fragment_type }
+    }
+
+    pub fn get_name(&self) -> &str {
+        &self.name
+    }
+
+    pub fn get_vertex_type(&self) -> DataType {
+        self.vertex_type
+    }
+
+    pub fn get_fragment_type(&self) -> DataType {
+        self.fragment_type
+    }
+}
+
+impl Display for ShaderExternalVariableMismatch {
+
+    fn fmt(&self, f: &mut Formatter) -> Result<(), std::fmt::Error> {
+        write!(f, 
+            "Both the vertex and fragment shader have an external variable with name {}, 
+            but the data type of the vertex shader is {:?} 
+            and the data type of the fragment shader is {:?}", 
+            self.name, self.vertex_type, self.fragment_type
+        )
+    }
+}
+
+impl Error for ShaderExternalVariableMismatch {}
 
 impl ShaderPair {
     fn match_shader_variables_types(
@@ -172,6 +320,22 @@ impl ShaderPair {
         Ok(())
     }
 
+    /// Links a given *VertexShader* with a given *FragmentShader* by the names of
+    /// their output and input variables.
+    /// 
+    /// Every variable of the vertex shader with type *FragmentOutput* will be
+    /// linked with the variable of the fragment shader with type *VertexInput*
+    /// that has the same name as that variable of the vertex shader. 
+    /// If the data types of the variables differ (for instance *int* vs *float*), 
+    /// an error will be returned. 
+    /// If the fragment shader doesn't have such a variable, an error will be 
+    /// returned.
+    /// (And a similar error will be returned if the fragment shader has a
+    /// *VertexInput* variable, but the vertex shader doesn't have a matching
+    /// *FragmentOutput* variable.)
+    /// 
+    /// Furthermore, an error will be returned if the vertex and fragment shader
+    /// have an external variable with the same name, but with different *DataType*.
     pub fn link_by_attribute_names(
         vertex_shader: &Arc<dyn VertexShader>,
         fragment_shader: &Arc<dyn FragmentShader>,
@@ -184,7 +348,7 @@ impl ShaderPair {
         );
         if maybe_type_mismatch.is_err() {
             let type_mismatch = maybe_type_mismatch.unwrap_err();
-            return Err(ShaderLinkError::new(
+            return Err(ShaderLinkError::specific(
                 vertex_shader.as_ref(),
                 fragment_shader.as_ref(),
                 ShaderNameLinkError::TypeMismatch {
@@ -213,7 +377,7 @@ impl ShaderPair {
 
         if maybe_miss_fragment.is_err() {
             let unmatched_vertex_output = maybe_miss_fragment.unwrap_err();
-            return Err(ShaderLinkError::new(
+            return Err(ShaderLinkError::specific(
                 vertex_shader.as_ref(),
                 fragment_shader.as_ref(),
                 ShaderNameLinkError::MissingFragmentInput {
@@ -224,7 +388,7 @@ impl ShaderPair {
 
         if maybe_miss_vertex.is_err() {
             let unmatched_fragment_input = maybe_miss_vertex.unwrap_err();
-            return Err(ShaderLinkError::new(
+            return Err(ShaderLinkError::specific(
                 vertex_shader.as_ref(),
                 fragment_shader.as_ref(),
                 ShaderNameLinkError::MissingVertexOutput {
@@ -233,6 +397,6 @@ impl ShaderPair {
             ));
         }
 
-        Ok(ShaderPair::new(vertex_shader, fragment_shader))
+        ShaderPair::new(vertex_shader, fragment_shader)
     }
 }
