@@ -7,7 +7,10 @@ use std::sync::Arc;
 pub trait Instance: Debug + Send + Sync + 'static {
     fn get_shader_manager(&self) -> Arc<dyn ShaderManager>;
 
-    fn create_abstract_grid_group(&self, builder: &AbstractGridGroupBuilder) -> (Arc<dyn AbstractGridGroup>, GridGroupIDs);
+    fn create_abstract_grid_group(
+        &self,
+        builder: &AbstractGridGroupBuilder,
+    ) -> (Arc<dyn AbstractGridGroup>, GridGroupIDs);
 
     fn as_any(&self) -> &dyn Any;
 }
@@ -45,7 +48,10 @@ mod tests {
             unimplemented!()
         }
 
-        fn create_abstract_grid_group(&self, _builder: &AbstractGridGroupBuilder) -> (Arc<dyn AbstractGridGroup>, GridGroupIDs) {
+        fn create_abstract_grid_group(
+            &self,
+            _builder: &AbstractGridGroupBuilder,
+        ) -> (Arc<dyn AbstractGridGroup>, GridGroupIDs) {
             unimplemented!()
         }
     }

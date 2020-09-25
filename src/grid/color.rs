@@ -11,11 +11,10 @@ pub trait ColorGrid {
 
 /// Every *ColorGrid(Builder)* has an associated *ColorStartOperation*. This
 /// operation determines what should be done with the color grid when its
-/// *RenderFlow* starts. See the documentation of each of the possibilities 
+/// *RenderFlow* starts. See the documentation of each of the possibilities
 /// for more information.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum ColorStartOperation {
-
     /// The colors the grid had before the start of the *RenderFlow* should
     /// be preserved during the render flow. This is needed when you want to
     /// read colors that were stored in a previous render flow (or were
@@ -25,7 +24,7 @@ pub enum ColorStartOperation {
     /// The colors of the grid should be cleared to some fixed value when
     /// its *RenderFlow* starts. This value can be chosen right before the
     /// render flow starts.
-    Clear,    // Use undefined image layout
+    Clear, // Use undefined image layout
 
     /// It doesn't matter which colors the grid has before the start of the
     /// render flow. This is for instance the case when you are going to
@@ -39,7 +38,6 @@ pub enum ColorStartOperation {
 /// more information.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub enum ColorPurpose {
-
     /// The colors stored in the grid are no longer needed once the *RenderFlow*
     /// is over.
     Nothing,
@@ -55,7 +53,7 @@ pub enum ColorPurpose {
     Transfer, // Transfer source
 
     /// The colors are going to be replaced by the colors of some other color grid.
-    Replace,  // Transfer destination
+    Replace, // Transfer destination
 }
 
 /// A struct that contains the information necessary to create an
@@ -63,16 +61,15 @@ pub enum ColorPurpose {
 /// which define what should happen with the color grid at the beginning and
 /// the end of *RenderFlow*s. See the documentation of these two types for more
 /// information.
-/// 
-/// To use an instance of this struct, add it to the *color_grids* of an 
-/// *AbstractGridGroupBuilder*. 
+///
+/// To use an instance of this struct, add it to the *color_grids* of an
+/// *AbstractGridGroupBuilder*.
 pub struct AbstractColorGridBuilder {
-
     /// What should happen with the grid upon the start of its *RenderFlow*. See
     /// the documentation of *ColorStartOperation* for more information.
     pub start_operation: ColorStartOperation,
 
     /// What the colors in the grid will be used for after its *RenderFlow* has
     /// ended. See the documentation of *ColorPurpose* for more information.
-    pub purpose: ColorPurpose
+    pub purpose: ColorPurpose,
 }

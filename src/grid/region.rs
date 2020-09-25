@@ -1,7 +1,7 @@
 /// This struct describes a rectangular region in a *ColorGrid* or a
 /// *DepthStencilGrid*. It is just a pair of (x,y,width,height) and
 /// doesn't store any data about any grid.
-/// 
+///
 /// TODO Add more use cases for this struct (besides debug dumps)
 #[derive(Clone, Copy, Debug)]
 pub struct GridRegion {

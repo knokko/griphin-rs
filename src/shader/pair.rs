@@ -8,21 +8,36 @@ pub struct ShaderPair {
     vertex_shader: Arc<dyn VertexShader>,
     fragment_shader: Arc<dyn FragmentShader>,
 
-    external_variables: Vec<ExternalShaderVariable>
+    external_variables: Vec<ExternalShaderVariable>,
 }
 
 impl ShaderPair {
-    pub fn new(vertex_shader: &Arc<dyn VertexShader>, fragment_shader: &Arc<dyn FragmentShader>) -> Self {
+    pub fn new(
+        vertex_shader: &Arc<dyn VertexShader>,
+        fragment_shader: &Arc<dyn FragmentShader>,
+    ) -> Self {
         let mut external_variables = Vec::new();
         for variable in vertex_shader.get_variables() {
             match variable.get_variable_type() {
-                VertexShaderVariableType::External(ext) => external_variables.push(ExternalShaderVariable::new(variable.get_name().to_string(), variable.get_data_type(), ext)),
+                VertexShaderVariableType::External(ext) => {
+                    external_variables.push(ExternalShaderVariable::new(
+                        variable.get_name().to_string(),
+                        variable.get_data_type(),
+                        ext,
+                    ))
+                }
                 _ => {}
             };
         }
         for variable in fragment_shader.get_variables() {
             match variable.get_variable_type() {
-                FragmentShaderVariableType::External(ext) => external_variables.push(ExternalShaderVariable::new(variable.get_name().to_string(), variable.get_data_type(), ext)),
+                FragmentShaderVariableType::External(ext) => {
+                    external_variables.push(ExternalShaderVariable::new(
+                        variable.get_name().to_string(),
+                        variable.get_data_type(),
+                        ext,
+                    ))
+                }
                 _ => {}
             };
         }
@@ -30,7 +45,7 @@ impl ShaderPair {
         Self {
             vertex_shader: Arc::clone(vertex_shader),
             fragment_shader: Arc::clone(fragment_shader),
-            external_variables
+            external_variables,
         }
     }
 
@@ -68,7 +83,11 @@ impl<E: Error> Display for ShaderLinkError<E> {
 impl<E: Error> Error for ShaderLinkError<E> {}
 
 impl<E: Error> ShaderLinkError<E> {
-    pub fn new(vertex_shader: &dyn VertexShader, fragment_shader: &dyn FragmentShader, error: E) -> Self {
+    pub fn new(
+        vertex_shader: &dyn VertexShader,
+        fragment_shader: &dyn FragmentShader,
+        error: E,
+    ) -> Self {
         Self {
             vertex_name: vertex_shader.get_debug_name().to_string(),
             fragment_name: fragment_shader.get_debug_name().to_string(),
@@ -113,13 +132,15 @@ impl ShaderPair {
         variables1: &Vec<VertexShaderVariable>,
         variables2: &Vec<FragmentShaderVariable>,
         filter1: impl Fn(&VertexShaderVariable) -> bool,
-        filter2: impl Fn(&FragmentShaderVariable) -> bool
+        filter2: impl Fn(&FragmentShaderVariable) -> bool,
     ) -> Result<(), (VertexShaderVariable, FragmentShaderVariable)> {
         for var1 in variables1 {
             if filter1(var1) {
                 for var2 in variables2 {
                     if filter2(var2) {
-                        if var1.get_name() == var2.get_name() && var1.get_data_type() != var2.get_data_type() {
+                        if var1.get_name() == var2.get_name()
+                            && var1.get_data_type() != var2.get_data_type()
+                        {
                             return Err((var1.clone(), var2.clone()));
                         }
                     }
@@ -159,7 +180,7 @@ impl ShaderPair {
             vertex_shader.get_variables(),
             fragment_shader.get_variables(),
             |var| var.get_variable_type() == VertexShaderVariableType::FragmentOutput,
-            |var| var.get_variable_type() == FragmentShaderVariableType::VertexInput
+            |var| var.get_variable_type() == FragmentShaderVariableType::VertexInput,
         );
         if maybe_type_mismatch.is_err() {
             let type_mismatch = maybe_type_mismatch.unwrap_err();
@@ -173,14 +194,18 @@ impl ShaderPair {
             ));
         }
 
-        let vertex_output_names = vertex_shader.get_variables().into_iter()
-                .filter(|var| var.get_variable_type() == VertexShaderVariableType::FragmentOutput)
-                .map(|var| var.get_name().to_string())
-        .collect();
-        let fragment_input_names = fragment_shader.get_variables().into_iter()
-                .filter(|var| var.get_variable_type() == FragmentShaderVariableType::VertexInput)
-                .map(|var| var.get_name().to_string())
-        .collect();
+        let vertex_output_names = vertex_shader
+            .get_variables()
+            .into_iter()
+            .filter(|var| var.get_variable_type() == VertexShaderVariableType::FragmentOutput)
+            .map(|var| var.get_name().to_string())
+            .collect();
+        let fragment_input_names = fragment_shader
+            .get_variables()
+            .into_iter()
+            .filter(|var| var.get_variable_type() == FragmentShaderVariableType::VertexInput)
+            .map(|var| var.get_name().to_string())
+            .collect();
         let maybe_miss_fragment =
             Self::match_shader_variable_names(&vertex_output_names, &fragment_input_names);
         let maybe_miss_vertex =
@@ -208,9 +233,6 @@ impl ShaderPair {
             ));
         }
 
-        Ok(ShaderPair::new(
-            vertex_shader,
-            fragment_shader
-        ))
+        Ok(ShaderPair::new(vertex_shader, fragment_shader))
     }
 }
