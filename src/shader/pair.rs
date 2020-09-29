@@ -103,10 +103,10 @@ impl ShaderPair {
     }
 }
 
-// TODO Rewrite documentation a little
 /// This error indicates that a *VertexShader* couldn't be linked to a certain
-/// *FragmentShader*. The reason depends on the generic type E (and different
-/// linking functions can return different types of errors).
+/// *FragmentShader*. The reason why this linking fails could be because the
+/// shaders have a *ShaderExternalVariableMismatch*, or because of some other
+/// reason that is specific to the way the shaders were attempted to be linked.
 #[derive(Debug)]
 pub struct ShaderLinkError<E: Error> {
     vertex_name: String,
@@ -115,11 +115,20 @@ pub struct ShaderLinkError<E: Error> {
     error: ShaderLinkErrorType<E>,
 }
 
-// TODO Write docs
+/// This enum has the 2 possible classes of reasons two shaders can't be linked 
+/// into a *ShaderPair*: 
+/// (1) They have mismatching external variables (a *General* Error)
+/// (2) An error that is *Specific* to the linking method occurred
 #[derive(Debug)]
 pub enum ShaderLinkErrorType<E: Error> {
 
+    /// A general linking error occurred. Currently, this can only be a
+    /// *ShaderExternalVariableMismatch*
     General(ShaderExternalVariableMismatch),
+
+    /// An error occurred that is specific to the way the shaders were
+    /// attempted to be linked. See the documentation of that method for
+    /// more information.
     Specific(E)
 }
 
@@ -233,7 +242,9 @@ impl Display for ShaderNameLinkError {
 
 impl Error for ShaderNameLinkError {}
 
-// TODO Document this
+/// This error struct indicates that an attempt was made to link a vertex shader
+/// to a fragment shader, but this failed because both shaders have an external
+/// variable with the same name, but with a different type.
 #[derive(Debug)]
 pub struct ShaderExternalVariableMismatch {
 
@@ -248,14 +259,17 @@ impl ShaderExternalVariableMismatch {
         Self { name: name.to_string(), vertex_type, fragment_type }
     }
 
+    /// Gets the name of the conflicting external variables
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    /// Gets the type of the variable of the vertex shader
     pub fn get_vertex_type(&self) -> DataType {
         self.vertex_type
     }
 
+    /// Gets the type of the variable of the fragment shader
     pub fn get_fragment_type(&self) -> DataType {
         self.fragment_type
     }
