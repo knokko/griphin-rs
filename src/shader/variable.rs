@@ -5,9 +5,8 @@ use crate::*;
 /// the value of the variable come from or go to?).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum VertexShaderVariableType {
-
     /// This variable is an input variable, and it will get its value from the
-    /// per-vertex data of the model. 
+    /// per-vertex data of the model.
     VertexInput,
 
     /// This variable is an input variable, and it will gets its value from the
@@ -31,7 +30,7 @@ pub enum VertexShaderVariableType {
     /// be the output value of the *provoking* vertex (usually the first vertex
     /// of the line or triangle). The output values of the other vertices will
     /// be ignored.
-    FlatFragmentOutput
+    FlatFragmentOutput,
 }
 
 /// The *variable* type of a variable of a fragment shader. This type indicates
@@ -39,7 +38,6 @@ pub enum VertexShaderVariableType {
 /// the value of the variable come from or go to?).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FragmentShaderVariableType {
-
     /// This variable is an input variable, and its value will come from a
     /// corresponding output variable of the vertex shader. It will be a mix
     /// of the output values of the responsible vertices for the fragment.
@@ -70,15 +68,14 @@ pub enum FragmentShaderVariableType {
 /// more information.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ExternalShaderVariableType {
-
     /// This variable is an input variable, and the value can be set right before
     /// drawing. This value is global and thus shared for all vertices and fragments
     /// that are drawn at the same time.
     UniformInput,
 
     /// This variable is an input texture that is a reference to a texture on the
-    /// GPU. Any pixel of the texture can be accessed freely. The texture must be 
-    /// submitted to the GPU in advance, but the choice which texture to use can 
+    /// GPU. Any pixel of the texture can be accessed freely. The texture must be
+    /// submitted to the GPU in advance, but the choice which texture to use can
     /// be made right before drawing (as long as all candidate textures are already
     /// in GPU memory).
     TextureInput,
@@ -145,11 +142,7 @@ impl FragmentShaderVariable {
     /// Construct a new *FragmentShaderVariable* with the given name, data type, and
     /// variable type. This function acts like a basic constructor and doesn't do
     /// anything special.
-    pub fn new(
-        name: &str,
-        data_type: DataType,
-        variable_type: FragmentShaderVariableType,
-    ) -> Self {
+    pub fn new(name: &str, data_type: DataType, variable_type: FragmentShaderVariableType) -> Self {
         Self {
             name: name.to_string(),
             data_type,
@@ -187,11 +180,7 @@ impl ExternalShaderVariable {
     /// Constructs a new *ExternalShaderVariable* with the given name, data type,
     /// and variable type. This function acts like a basic constructor and doesn't
     /// do anything special.
-    pub fn new(
-        name: &str,
-        data_type: DataType,
-        variable_type: ExternalShaderVariableType,
-    ) -> Self {
+    pub fn new(name: &str, data_type: DataType, variable_type: ExternalShaderVariableType) -> Self {
         Self {
             name: name.to_string(),
             data_type,

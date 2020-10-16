@@ -6,15 +6,15 @@ use std::sync::Arc;
 
 /// The Griphin *Instance* is the root of a Griphin implementation. All important
 /// Griphin objects can be created directly or indirectly from the *Instance*.
-/// 
+///
 /// Every Griphin implementation should have a struct that implements *Instance*.
 /// Users of Griphin should create such an instance (and depend directly on that
 /// specific Griphin implementation) during start-up of the application. The code
 /// that constructs that instance struct should be the only code that depends
 /// directly on the Griphin implementation (the rest of the code should just see
-/// this struct as a dynamic Griphin *Instance* and only depend on this crate). 
-/// 
-/// That instance struct may need quite some parameters, but that will depend on the 
+/// this struct as a dynamic Griphin *Instance* and only depend on this crate).
+///
+/// That instance struct may need quite some parameters, but that will depend on the
 /// implementation (a Vulkan-based instance is probably harder to construct than an
 /// OpenGL-based instance). But once it is constructed, it should not need any more
 /// information than defined by the methods of this crate.

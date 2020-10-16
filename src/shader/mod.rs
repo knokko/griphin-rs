@@ -11,8 +11,8 @@ pub use manager::*;
 pub use pair::*;
 pub use variable::*;
 
-/// Represents a vertex shader (a very well-known part of the graphics pipeline). 
-/// 
+/// Represents a vertex shader (a very well-known part of the graphics pipeline).
+///
 /// Vertex shaders are useless in isolution, but they can be used to create a
 /// *ShaderPair* in combination with a *FragmentShader*. The same
 /// *VertexShader* can be used to create multiple *ShaderPair*s.

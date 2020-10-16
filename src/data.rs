@@ -1,5 +1,5 @@
-/// Represents a data 'kind' (like int or float) for a shader variable. Together 
-/// with a *DataShape*, a *DataKind* forms a *DataType*. You can't construct new 
+/// Represents a data 'kind' (like int or float) for a shader variable. Together
+/// with a *DataShape*, a *DataKind* forms a *DataType*. You can't construct new
 /// *DataKind*s; you can only use the built-in data types *INT*, *FLOAT*, and *BOOL*.
 #[derive(PartialEq, Eq, Debug, Clone, Copy)]
 pub struct DataKind {
