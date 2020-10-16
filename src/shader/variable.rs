@@ -76,11 +76,28 @@ pub enum ExternalShaderVariableType {
     /// that are drawn at the same time.
     UniformInput,
 
+    /// This variable is an input texture that is a reference to a texture on the
+    /// GPU. Any pixel of the texture can be accessed freely. The texture must be 
+    /// submitted to the GPU in advance, but the choice which texture to use can 
+    /// be made right before drawing (as long as all candidate textures are already
+    /// in GPU memory).
     TextureInput,
+
+    /// This variable is an input texture that is stored on a *ColorGrid* in the
+    /// *RenderFlow*. Any pixel of the color grid can be accessed freely. Which
+    /// color grid to use must be specified when creating the render flow.
     ColorGridInput,
+
+    /// This variable is an input texture that stores depth & stencil values
+    /// rather than colors. It reads its data from a *DepthStencilGrid* in the
+    /// same *RenderFlow*. Any depth-stencil value can be accessed freely (
+    /// although I don't see many use cases for this). Which depth stencil grid
+    /// to use must be specified when creating the render flow.
     DepthStencilGridInput,
 }
 
+/// Represents a variable of a vertex shader. This struct is a simple tuple of name,
+/// data type and variable type.
 #[derive(Clone, Debug)]
 pub struct VertexShaderVariable {
     name: String,
@@ -89,6 +106,8 @@ pub struct VertexShaderVariable {
 }
 
 impl VertexShaderVariable {
+    /// Constructs a new *VertexShaderVariable* with the given name, data type, and
+    /// variable type. This function doesn't do anything fancy.
     pub fn new(name: &str, data_type: DataType, variable_type: VertexShaderVariableType) -> Self {
         Self {
             name: name.to_string(),
@@ -97,19 +116,24 @@ impl VertexShaderVariable {
         }
     }
 
+    /// Gets the name of this shader variable.
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    /// Gets the *DataType* of this shader variable.
     pub fn get_data_type(&self) -> DataType {
         self.data_type
     }
 
+    /// Gets the *VertexShaderVariableType* of this shader variable.
     pub fn get_variable_type(&self) -> VertexShaderVariableType {
         self.variable_type
     }
 }
 
+/// Represents a variable of a fragment shader. This struct is a simple tuple of
+/// name, data type, and variable type.
 #[derive(Clone, Debug)]
 pub struct FragmentShaderVariable {
     name: String,
@@ -118,31 +142,40 @@ pub struct FragmentShaderVariable {
 }
 
 impl FragmentShaderVariable {
+    /// Construct a new *FragmentShaderVariable* with the given name, data type, and
+    /// variable type. This function acts like a basic constructor and doesn't do
+    /// anything special.
     pub fn new(
-        name: String,
+        name: &str,
         data_type: DataType,
         variable_type: FragmentShaderVariableType,
     ) -> Self {
         Self {
-            name,
+            name: name.to_string(),
             data_type,
             variable_type,
         }
     }
 
+    /// Gets the name of this variable.
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    /// Gets the *DataType* of this variable.
     pub fn get_data_type(&self) -> DataType {
         self.data_type
     }
 
+    /// Gets the *FragmentShaderVariableType* of this variable.
     pub fn get_variable_type(&self) -> FragmentShaderVariableType {
         self.variable_type
     }
 }
 
+/// Represents a variable of a vertex shader or fragment shader that is not part of
+/// the 'main' input or output (but can still be important). This struct is a simple
+/// tuple of name, data type, and variable type.
 #[derive(Clone, Debug)]
 pub struct ExternalShaderVariable {
     name: String,
@@ -151,26 +184,32 @@ pub struct ExternalShaderVariable {
 }
 
 impl ExternalShaderVariable {
+    /// Constructs a new *ExternalShaderVariable* with the given name, data type,
+    /// and variable type. This function acts like a basic constructor and doesn't
+    /// do anything special.
     pub fn new(
-        name: String,
+        name: &str,
         data_type: DataType,
         variable_type: ExternalShaderVariableType,
     ) -> Self {
         Self {
-            name,
+            name: name.to_string(),
             data_type,
             variable_type,
         }
     }
 
+    /// Gets the name of this shader variable.
     pub fn get_name(&self) -> &str {
         &self.name
     }
 
+    /// Gets the data type of this shader variable.
     pub fn get_data_type(&self) -> DataType {
         self.data_type
     }
 
+    /// Gets the *ExternalShaderVariableType* of this shader variable.
     pub fn get_variable_type(&self) -> ExternalShaderVariableType {
         self.variable_type
     }

@@ -61,12 +61,12 @@ pub trait ShaderManager: Debug + Send + Sync + 'static {
     ///         VertexShaderVariable::new(
     ///             "position",
     ///             DataType::new(FLOAT, VEC3),
-    ///             VertexShaderVariableType::ModelInput
+    ///             VertexShaderVariableType::VertexInput
     ///         ),
     ///         VertexShaderVariable::new(
     ///             "outputPosition",
     ///             DataType::new(FLOAT, VEC4),
-    ///             VertexShaderVariableType::FragmentOutput
+    ///             VertexShaderVariableType::SmoothFragmentOutput
     ///         ),
     ///         VertexShaderVariable::new(
     ///             "projectionMatrix",

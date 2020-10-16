@@ -35,7 +35,7 @@ impl ShaderPair {
             match variable.get_variable_type() {
                 VertexShaderVariableType::External(ext) => {
                     external_variables.push(ExternalShaderVariable::new(
-                        variable.get_name().to_string(),
+                        variable.get_name(),
                         variable.get_data_type(),
                         ext,
                     ))
@@ -65,7 +65,7 @@ impl ShaderPair {
                             }
                         }, None => {
                             external_variables.push(ExternalShaderVariable::new(
-                                variable.get_name().to_string(),
+                                variable.get_name(),
                                 variable.get_data_type(),
                                 ext,
                             ));
@@ -354,14 +354,31 @@ impl ShaderPair {
         vertex_shader: &Arc<dyn VertexShader>,
         fragment_shader: &Arc<dyn FragmentShader>,
     ) -> Result<Self, ShaderLinkError<ShaderNameLinkError>> {
-        let maybe_type_mismatch = Self::match_shader_variables_types(
+        let maybe_flat_type_mismatch = Self::match_shader_variables_types(
             vertex_shader.get_variables(),
             fragment_shader.get_variables(),
-            |var| var.get_variable_type() == VertexShaderVariableType::FragmentOutput,
-            |var| var.get_variable_type() == FragmentShaderVariableType::VertexInput,
+            |var| var.get_variable_type() == VertexShaderVariableType::FlatFragmentOutput,
+            |var| var.get_variable_type() == FragmentShaderVariableType::FlatVertexInput,
         );
-        if maybe_type_mismatch.is_err() {
-            let type_mismatch = maybe_type_mismatch.unwrap_err();
+        let maybe_smooth_type_mismatch = Self::match_shader_variables_types(
+            vertex_shader.get_variables(),
+            fragment_shader.get_variables(),
+            |var| var.get_variable_type() == VertexShaderVariableType::SmoothFragmentOutput,
+            |var| var.get_variable_type() == FragmentShaderVariableType::SmoothVertexInput,
+        );
+        if maybe_flat_type_mismatch.is_err() {
+            let type_mismatch = maybe_flat_type_mismatch.unwrap_err();
+            return Err(ShaderLinkError::specific(
+                vertex_shader.as_ref(),
+                fragment_shader.as_ref(),
+                ShaderNameLinkError::TypeMismatch {
+                    vertex_output: type_mismatch.0,
+                    fragment_input: type_mismatch.1,
+                },
+            ));
+        }
+        if maybe_smooth_type_mismatch.is_err() {
+            let type_mismatch = maybe_smooth_type_mismatch.unwrap_err();
             return Err(ShaderLinkError::specific(
                 vertex_shader.as_ref(),
                 fragment_shader.as_ref(),
@@ -372,25 +389,51 @@ impl ShaderPair {
             ));
         }
 
-        let vertex_output_names = vertex_shader
+        let flat_vertex_output_names = vertex_shader
             .get_variables()
             .into_iter()
-            .filter(|var| var.get_variable_type() == VertexShaderVariableType::FragmentOutput)
+            .filter(|var| var.get_variable_type() == VertexShaderVariableType::FlatFragmentOutput)
             .map(|var| var.get_name().to_string())
             .collect();
-        let fragment_input_names = fragment_shader
+        let smooth_vertex_output_names = vertex_shader
             .get_variables()
             .into_iter()
-            .filter(|var| var.get_variable_type() == FragmentShaderVariableType::VertexInput)
+            .filter(|var| var.get_variable_type() == VertexShaderVariableType::SmoothFragmentOutput)
             .map(|var| var.get_name().to_string())
             .collect();
-        let maybe_miss_fragment =
-            Self::match_shader_variable_names(&vertex_output_names, &fragment_input_names);
-        let maybe_miss_vertex =
-            Self::match_shader_variable_names(&fragment_input_names, &vertex_output_names);
+        let flat_fragment_input_names = fragment_shader
+            .get_variables()
+            .into_iter()
+            .filter(|var| var.get_variable_type() == FragmentShaderVariableType::FlatVertexInput)
+            .map(|var| var.get_name().to_string())
+            .collect();
+        let smooth_fragment_input_names = fragment_shader
+            .get_variables()
+            .into_iter()
+            .filter(|var| var.get_variable_type() == FragmentShaderVariableType::SmoothVertexInput)
+            .map(|var| var.get_name().to_string())
+            .collect();
+        let maybe_miss_fragment_flat =
+            Self::match_shader_variable_names(&flat_vertex_output_names, &flat_fragment_input_names);
+        let maybe_miss_fragment_smooth =
+            Self::match_shader_variable_names(&smooth_vertex_output_names, &smooth_fragment_input_names);
+        let maybe_miss_vertex_flat =
+            Self::match_shader_variable_names(&flat_fragment_input_names, &flat_vertex_output_names);
+        let maybe_miss_vertex_smooth =
+            Self::match_shader_variable_names(&smooth_fragment_input_names, &smooth_vertex_output_names);
 
-        if maybe_miss_fragment.is_err() {
-            let unmatched_vertex_output = maybe_miss_fragment.unwrap_err();
+        if maybe_miss_fragment_flat.is_err() {
+            let unmatched_vertex_output = maybe_miss_fragment_flat.unwrap_err();
+            return Err(ShaderLinkError::specific(
+                vertex_shader.as_ref(),
+                fragment_shader.as_ref(),
+                ShaderNameLinkError::MissingFragmentInput {
+                    vertex_output_name: unmatched_vertex_output,
+                },
+            ));
+        }
+        if maybe_miss_fragment_smooth.is_err() {
+            let unmatched_vertex_output = maybe_miss_fragment_smooth.unwrap_err();
             return Err(ShaderLinkError::specific(
                 vertex_shader.as_ref(),
                 fragment_shader.as_ref(),
@@ -400,8 +443,18 @@ impl ShaderPair {
             ));
         }
 
-        if maybe_miss_vertex.is_err() {
-            let unmatched_fragment_input = maybe_miss_vertex.unwrap_err();
+        if maybe_miss_vertex_flat.is_err() {
+            let unmatched_fragment_input = maybe_miss_vertex_flat.unwrap_err();
+            return Err(ShaderLinkError::specific(
+                vertex_shader.as_ref(),
+                fragment_shader.as_ref(),
+                ShaderNameLinkError::MissingVertexOutput {
+                    fragment_input_name: unmatched_fragment_input,
+                },
+            ));
+        }
+        if maybe_miss_vertex_smooth.is_err() {
+            let unmatched_fragment_input = maybe_miss_vertex_smooth.unwrap_err();
             return Err(ShaderLinkError::specific(
                 vertex_shader.as_ref(),
                 fragment_shader.as_ref(),
