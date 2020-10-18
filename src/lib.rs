@@ -6,6 +6,7 @@ mod grid;
 mod instance;
 mod pipeline;
 mod shader;
+mod util;
 mod vertex;
 
 pub use data::*;
@@ -16,4 +17,5 @@ pub use grid::*;
 pub use instance::*;
 pub use pipeline::*;
 pub use shader::*;
+pub use util::*;
 pub use vertex::*;
