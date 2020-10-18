@@ -6,7 +6,7 @@ use crate::*;
 #[derive(Clone)]
 pub struct DrawingNodeOutput {
     destination: DrawingNodeOutputDestination,
-    shader_variable_name: String,
+    shader_variable_name: StringRef,
 }
 
 /// This enum specifies what to do with the output data of a drawing node. This can

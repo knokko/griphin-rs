@@ -1,9 +1,17 @@
 use crate::*;
 
+/// Represents an attribute of a *VertexDescription*. A *VertexAttribute* has a
+/// name, *DataType*, and *AttributeKind*. It also has an offset, but that is
+/// only for internal use.
+/// 
+/// To get an instance of this struct, use the *add_attribute* method of
+/// an instance of *VertexDescription*. You should store every *VertexAttribute*
+/// you create, because the implementation of *Vertex* corresponding to the
+/// *VertexDescription* will need it to implement its *store* method.
 #[derive(Debug)]
 pub struct VertexAttribute {
 
-    name: String,
+    name: StringRef,
     data_type: DataType,
     kind: AttributeKind,
     pub(super) offset: usize
@@ -11,8 +19,12 @@ pub struct VertexAttribute {
 
 impl VertexAttribute {
 
-    pub(super) fn new(name: String, data_type: DataType, kind: AttributeKind, offset: usize) -> Self {
-        Self { name, data_type, kind, offset }
+    pub(super) fn new(name: &StringRef, data_type: DataType, kind: AttributeKind, offset: usize) -> Self {
+        Self { name: name.clone(), data_type, kind, offset }
+    }
+
+    pub fn get_name(&self) -> &StringRef {
+        &self.name
     }
 
     pub fn get_data_type(&self) -> DataType {

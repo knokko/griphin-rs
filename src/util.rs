@@ -1,58 +1,87 @@
-use std::ops::Deref;
+use std::fmt::{
+    Display,
+    Formatter
+};
+use std::rc::Rc;
+use std::ops::Add;
 
-/// A simple enum that either wraps an *&'static str* or a *String*. This type is
+/// A simple enum that either wraps an *&'static str* or a *Rc<String>*. This type is
 /// convenient as string type because both wrapped types can be occasionally
-/// useful. To get an instance of this enum, use *enum_str* or *enum_string*.
+/// useful. To get an instance of this enum, use *str_ref* or *string_ref*.
 /// 
 /// # Example
 /// ```
 /// use griphin::*;
 /// 
-/// let static_ref = enum_str("Some string");
-/// let owned = enum_string(String::from("Some string"));
+/// let static_ref = str_ref("Some string");
+/// let owned = string_ref(String::from("Some string"));
 /// assert_eq!(static_ref, owned);
 /// ```
-#[derive(Debug, Clone, Eq)]
-pub enum EnumString {
+#[derive(Debug, Eq)]
+pub enum StringRef {
 
-    StaticRef(&'static str),
-    Owned(String)
+    Static(&'static str),
+    NonStatic(Rc<String>)
 }
 
-impl Deref for EnumString {
+impl StringRef {
 
-    type Target = str;
-
-    fn deref(&self) -> &str {
+    pub fn to_str(&self) -> &str {
         match self {
-            Self::StaticRef(static_ref) => static_ref,
-            Self::Owned(owned) => &owned
+            Self::Static(static_ref) => static_ref,
+            Self::NonStatic(owned) => &owned
         }
     }
 }
 
-impl PartialEq for EnumString {
+impl PartialEq for StringRef {
 
-    fn eq(&self, other: &EnumString) -> bool {
-        self.deref() == other.deref()
+    fn eq(&self, other: &StringRef) -> bool {
+        self.to_str() == other.to_str()
     }
 }
 
-impl PartialEq<&str> for EnumString {
+impl PartialEq<&str> for StringRef {
 
     fn eq(&self, other: &&str) -> bool {
-        self.deref() == *other
+        self.to_str() == *other
     }
 }
 
-/// Creates an *EnumString* instance that wraps the given static *str* reference.
-pub const fn enum_str(string: &'static str) -> EnumString {
-    EnumString::StaticRef(string)
+impl Clone for StringRef {
+
+    fn clone(&self) -> StringRef {
+        match self {
+            Self::Static(static_ref) => str_ref(static_ref),
+            Self::NonStatic(counter) => StringRef::NonStatic(Rc::clone(&counter))
+        }
+    }
 }
 
-/// Creates an *EnumString* instance that wraps the given *String*.
-pub fn enum_string(string: String) -> EnumString {
-    EnumString::Owned(string)
+impl Add<&StringRef> for &StringRef {
+    type Output = StringRef;
+
+    fn add(self, other: &StringRef) -> StringRef {
+        let string = String::from(self.to_str()) + other.to_str();
+        string_ref(string)
+    }
+}
+
+impl Display for StringRef {
+
+    fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+        write!(f, "{}", self.to_str())
+    }
+}
+
+/// Creates an *StringRef* instance that wraps the given static *str* reference.
+pub const fn str_ref(string: &'static str) -> StringRef {
+    StringRef::Static(string)
+}
+
+/// Creates an *StringRef* instance that wraps the given *String*.
+pub fn string_ref(string: String) -> StringRef {
+    StringRef::NonStatic(Rc::new(string))
 }
 
 #[cfg(test)]
@@ -60,22 +89,24 @@ mod tests {
 
     use super::*;
 
-    const HELLO_WORLD: EnumString = enum_str("HelloWorld");
+    const HELLO_WORLD: StringRef = str_ref("HelloWorld");
 
     #[test]
     fn test_static_ref() {
-        assert_eq!("HelloWorld", HELLO_WORLD.deref());
+        assert_eq!("HelloWorld", HELLO_WORLD.to_str());
         assert_eq!(HELLO_WORLD, "HelloWorld");
-        assert_eq!(HELLO_WORLD, enum_str("HelloWorld"));
-        assert_eq!(HELLO_WORLD, enum_string(String::from("HelloWorld")));
+        assert_eq!(HELLO_WORLD, str_ref("HelloWorld"));
+        assert_eq!(HELLO_WORLD, string_ref(String::from("HelloWorld")));
+        assert_eq!(HELLO_WORLD, HELLO_WORLD.clone());
     }
 
     #[test]
     fn test_string() {
-        let hello_world = enum_string(String::from("HelloWorld"));
-        assert_eq!("HelloWorld", hello_world.deref());
+        let hello_world = string_ref(String::from("HelloWorld"));
+        assert_eq!("HelloWorld", hello_world.to_str());
         assert_eq!(hello_world, "HelloWorld");
-        assert_eq!(hello_world, enum_string(String::from("HelloWorld")));
-        assert_eq!(hello_world, enum_str("HelloWorld"));
+        assert_eq!(hello_world, string_ref(String::from("HelloWorld")));
+        assert_eq!(hello_world, str_ref("HelloWorld"));
+        assert_eq!(hello_world, hello_world.clone());
     }
 }

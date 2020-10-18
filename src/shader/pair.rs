@@ -53,7 +53,7 @@ impl ShaderPair {
                                     vertex_shader.as_ref(),
                                     fragment_shader.as_ref(),
                                     ShaderExternalVariableMismatch::new(
-                                        variable.get_name(),
+                                        variable.get_name().clone(),
                                         found_it.get_data_type(),
                                         variable.get_data_type(),
                                     ),
@@ -104,8 +104,8 @@ impl ShaderPair {
 /// reason that is specific to the way the shaders were attempted to be linked.
 #[derive(Debug)]
 pub struct ShaderLinkError<E: Error> {
-    vertex_name: String,
-    fragment_name: String,
+    vertex_name: StringRef,
+    fragment_name: StringRef,
 
     error: ShaderLinkErrorType<E>,
 }
@@ -154,8 +154,8 @@ impl<E: Error> ShaderLinkError<E> {
         error: E,
     ) -> Self {
         Self {
-            vertex_name: vertex_shader.get_debug_name().to_string(),
-            fragment_name: fragment_shader.get_debug_name().to_string(),
+            vertex_name: vertex_shader.get_debug_name().clone(),
+            fragment_name: fragment_shader.get_debug_name().clone(),
             error: ShaderLinkErrorType::Specific(error),
         }
     }
@@ -166,19 +166,19 @@ impl<E: Error> ShaderLinkError<E> {
         error: ShaderExternalVariableMismatch,
     ) -> Self {
         Self {
-            vertex_name: vertex_shader.get_debug_name().to_string(),
-            fragment_name: fragment_shader.get_debug_name().to_string(),
+            vertex_name: vertex_shader.get_debug_name().clone(),
+            fragment_name: fragment_shader.get_debug_name().clone(),
             error: ShaderLinkErrorType::General(error),
         }
     }
 
     /// Gets the *debug_name* of the *VertexShader* that wasn't linked successfully.
-    pub fn get_vertex_name(&self) -> &str {
+    pub fn get_vertex_name(&self) -> &StringRef {
         &self.vertex_name
     }
 
     /// Gets the *debug_name* of the *FragmentShader* that wasn't linked successfully.
-    pub fn get_fragment_name(&self) -> &str {
+    pub fn get_fragment_name(&self) -> &StringRef {
         &self.fragment_name
     }
 
@@ -207,10 +207,10 @@ pub enum ShaderNameLinkError {
     },
     /// The vertex shader has an output variable (that has a name), but the fragment
     /// shader doesn't have an input variable with that same name.
-    MissingFragmentInput { vertex_output_name: String },
+    MissingFragmentInput { vertex_output_name: StringRef },
     /// The fragment shader has an input variable (that has a name), but the vertex
     /// shader doesn't have an output variable with that same name.
-    MissingVertexOutput { fragment_input_name: String },
+    MissingVertexOutput { fragment_input_name: StringRef },
 }
 
 impl Display for ShaderNameLinkError {
@@ -236,22 +236,22 @@ impl Error for ShaderNameLinkError {}
 /// variable with the same name, but with a different type.
 #[derive(Debug)]
 pub struct ShaderExternalVariableMismatch {
-    name: String,
+    name: StringRef,
     vertex_type: DataType,
     fragment_type: DataType,
 }
 
 impl ShaderExternalVariableMismatch {
-    fn new(name: &str, vertex_type: DataType, fragment_type: DataType) -> Self {
+    fn new(name: StringRef, vertex_type: DataType, fragment_type: DataType) -> Self {
         Self {
-            name: name.to_string(),
+            name,
             vertex_type,
             fragment_type,
         }
     }
 
     /// Gets the name of the conflicting external variables
-    pub fn get_name(&self) -> &str {
+    pub fn get_name(&self) -> &StringRef {
         &self.name
     }
 
@@ -305,9 +305,9 @@ impl ShaderPair {
     }
 
     fn match_shader_variable_names(
-        required_names: &Vec<String>,
-        available_names: &Vec<String>,
-    ) -> Result<(), String> {
+        required_names: &Vec<StringRef>,
+        available_names: &Vec<StringRef>,
+    ) -> Result<(), StringRef> {
         for required in required_names {
             let mut found = false;
             for available in available_names {
@@ -384,25 +384,25 @@ impl ShaderPair {
             .get_variables()
             .into_iter()
             .filter(|var| var.get_variable_type() == VertexShaderVariableType::FlatFragmentOutput)
-            .map(|var| var.get_name().to_string())
+            .map(|var| var.get_name().clone())
             .collect();
         let smooth_vertex_output_names = vertex_shader
             .get_variables()
             .into_iter()
             .filter(|var| var.get_variable_type() == VertexShaderVariableType::SmoothFragmentOutput)
-            .map(|var| var.get_name().to_string())
+            .map(|var| var.get_name().clone())
             .collect();
         let flat_fragment_input_names = fragment_shader
             .get_variables()
             .into_iter()
             .filter(|var| var.get_variable_type() == FragmentShaderVariableType::FlatVertexInput)
-            .map(|var| var.get_name().to_string())
+            .map(|var| var.get_name().clone())
             .collect();
         let smooth_fragment_input_names = fragment_shader
             .get_variables()
             .into_iter()
             .filter(|var| var.get_variable_type() == FragmentShaderVariableType::SmoothVertexInput)
-            .map(|var| var.get_name().to_string())
+            .map(|var| var.get_name().clone())
             .collect();
         let maybe_miss_fragment_flat = Self::match_shader_variable_names(
             &flat_vertex_output_names,

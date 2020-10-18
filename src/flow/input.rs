@@ -6,7 +6,7 @@ use crate::*;
 #[derive(Clone)]
 pub struct DrawingNodeInput {
     pub source: DrawingNodeInputSource,
-    pub shader_variable_name: String,
+    pub shader_variable_name: StringRef,
 }
 
 /// This enum specifies where the input data of a drawing node should come from.

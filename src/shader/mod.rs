@@ -1,3 +1,5 @@
+use crate::*;
+
 use std::any::Any;
 use std::fmt::Debug;
 
@@ -22,7 +24,7 @@ pub trait VertexShader: Debug + Send + Sync + 'static {
     fn as_any(&self) -> &dyn Any;
 
     /// Gets the debug name that was used to create this vertex shader.
-    fn get_debug_name(&self) -> &str;
+    fn get_debug_name(&self) -> &StringRef;
 
     /// Gets a *Vec* containing all shader variables of this vertex shader
     /// (inputs, uniform variables, outputs...). These will be the same
@@ -35,7 +37,7 @@ pub trait VertexShader: Debug + Send + Sync + 'static {
 pub trait FragmentShader: Debug + Send + Sync + 'static {
     fn as_any(&self) -> &dyn Any;
 
-    fn get_debug_name(&self) -> &str;
+    fn get_debug_name(&self) -> &StringRef;
 
     fn get_variables(&self) -> &Vec<FragmentShaderVariable>;
 }

@@ -59,31 +59,31 @@ pub trait ShaderManager: Debug + Send + Sync + 'static {
     /// ";
     ///     let variables = vec![
     ///         VertexShaderVariable::new(
-    ///             "position",
+    ///             &str_ref("position"),
     ///             DataType::new(FLOAT, VEC3),
     ///             VertexShaderVariableType::VertexInput
     ///         ),
     ///         VertexShaderVariable::new(
-    ///             "outputPosition",
+    ///             &str_ref("outputPosition"),
     ///             DataType::new(FLOAT, VEC4),
     ///             VertexShaderVariableType::SmoothFragmentOutput
     ///         ),
     ///         VertexShaderVariable::new(
-    ///             "projectionMatrix",
+    ///             &str_ref("projectionMatrix"),
     ///             DataType::new(FLOAT, MAT4),
     ///             VertexShaderVariableType::External(
     ///                 ExternalShaderVariableType::UniformInput
     ///             )
     ///         ),
     ///         VertexShaderVariable::new(
-    ///             "viewMatrix",
+    ///             &str_ref("viewMatrix"),
     ///             DataType::new(FLOAT, MAT4),
     ///             VertexShaderVariableType::External(
     ///                 ExternalShaderVariableType::UniformInput
     ///             )
     ///         ),
     ///         VertexShaderVariable::new(
-    ///             "transformationMatrix",
+    ///             &str_ref("transformationMatrix"),
     ///             DataType::new(FLOAT, MAT4),
     ///             VertexShaderVariableType::External(
     ///                 ExternalShaderVariableType::UniformInput
@@ -92,9 +92,9 @@ pub trait ShaderManager: Debug + Send + Sync + 'static {
     ///     ];
     ///
     ///     let result = manager.create_vertex_shader(
-    ///         "example",
-    ///         main_function_body,
-    ///         other_functions,
+    ///         &str_ref("example"),
+    ///         &str_ref(main_function_body),
+    ///         &str_ref(other_functions),
     ///         variables,
     ///         Vec::new()
     ///     );
@@ -104,9 +104,9 @@ pub trait ShaderManager: Debug + Send + Sync + 'static {
     /// ```
     fn create_vertex_shader(
         &self,
-        debug_name: &str,
-        main_function_body: &str,
-        other_functions: &str,
+        debug_name: &StringRef,
+        main_function_body: &StringRef,
+        other_functions: &StringRef,
         variables: Vec<VertexShaderVariable>,
         libraries: Vec<Arc<dyn ShaderLibrary>>,
     ) -> Arc<dyn VertexShader>;
@@ -114,9 +114,9 @@ pub trait ShaderManager: Debug + Send + Sync + 'static {
     // TODO Document when it is more stable
     fn create_fragment_shader(
         &self,
-        debug_name: &str,
-        main_function: &str,
-        other_functions: &str,
+        debug_name: &StringRef,
+        main_function: &StringRef,
+        other_functions: &StringRef,
         variables: Vec<FragmentShaderVariable>,
         libraries: Vec<Arc<dyn ShaderLibrary>>,
     ) -> Arc<dyn FragmentShader>;
@@ -142,10 +142,10 @@ pub trait ShaderManager: Debug + Send + Sync + 'static {
     ///     return alpha * a + (1.0 - alpha) * b;
     /// }
     /// ";
-    ///     let result = manager.create_library("example", functions);
+    ///     let result = manager.create_library(&str_ref("example"), &str_ref(functions));
     ///
     ///     result
     /// }
     /// ```
-    fn create_library(&self, debug_name: &str, functions: &str) -> Arc<dyn ShaderLibrary>;
+    fn create_library(&self, debug_name: &StringRef, functions: &StringRef) -> Arc<dyn ShaderLibrary>;
 }

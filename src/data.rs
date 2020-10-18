@@ -1,3 +1,5 @@
+use crate::*;
+
 /// Represents a data 'kind' (like int or float) for a shader variable. Together
 /// with a *DataShape*, a *DataKind* forms a *DataType*. You can't construct new
 /// *DataKind*s; you can only use the built-in data types *INT*, *FLOAT*, and *BOOL*.
@@ -106,11 +108,11 @@ impl DataType {
 
     /// Gets the GLSL name of this *DataType*. That name can be injected into
     /// GLSL code directly and is meant to help Griphin implementations.
-    pub fn get_glsl_name(&self) -> String {
+    pub fn get_glsl_name(&self) -> StringRef {
         if self.shape == SINGLE {
-            self.kind.long_name.to_string()
+            str_ref(self.kind.long_name)
         } else {
-            self.kind.short_name.to_string() + self.shape.raw_name
+            string_ref(self.kind.short_name.to_string() + self.shape.raw_name)
         }
     }
 }
