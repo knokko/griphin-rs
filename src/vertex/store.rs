@@ -1,4 +1,5 @@
 use crate::*;
+use cgmath::*;
 
 pub struct VertexStore {
 
@@ -9,13 +10,18 @@ pub struct VertexStore {
 
 impl VertexStore {
 
-    pub fn new(description: &VertexDescription, vertices: &Vec<impl Vertex>, debug_level: DebugLevel, mut writer: Option<&mut dyn std::io::Write>) -> Self {
-        let vertex_size = description.get_size();
+    pub fn new<D: VertexDescription>(
+        description: &D,
+        vertices: &Vec<impl Vertex<D>>,
+        debug_level: DebugLevel,
+        mut writer: Option<&mut dyn std::io::Write>
+    ) -> Self {
+        let vertex_size = description.get_raw_description().get_size();
         let buffer_size = vertex_size * vertices.len();
         let mut store = Self { raw_buffer: vec![0; buffer_size], current_offset: 0 };
 
         for vertex in vertices {
-            vertex.store(&mut store);
+            vertex.store(&mut store, description);
             store.current_offset += vertex_size;
         }
 
@@ -35,7 +41,7 @@ impl VertexStore {
              */
             let mut store2 = Self { raw_buffer: vec![1; buffer_size], current_offset: 0 };
             for vertex in vertices {
-                vertex.store(&mut store2);
+                vertex.store(&mut store2, description);
                 store2.current_offset += vertex_size;
             }
 
@@ -56,7 +62,7 @@ impl VertexStore {
              */
             for vertex_index in 0 .. vertices.len() {
                 let vertex_offset = vertex_index * vertex_size;
-                for attribute in description.get_attributes() {
+                for attribute in description.get_raw_description().get_attributes() {
                     let offset = attribute.offset + vertex_offset;
                     let num_components = attribute.get_data_type().get_shape().get_size() as usize;
                     let mut float_values = Vec::with_capacity(num_components);
@@ -81,7 +87,7 @@ impl VertexStore {
                             for float_value in float_values {
                                 if float_value.is_nan() {
                                     log(&mut writer, log_id, "A vertex position is NaN");
-                                } else if float_value > max {
+                                } else if float_value > max || float_value < -max {
                                     log(&mut writer, log_id, "A vertex position is too large");
                                 }
                             }
@@ -143,7 +149,7 @@ impl VertexStore {
              * to debug because all vertices will be mapped to the same screen
              * position, making the entire scene completely invisible.
              */
-            for attribute in description.get_attributes() {
+            for attribute in description.get_raw_description().get_attributes() {
                 match attribute.get_kind() {
                     AttributeKind::Position{max: _} => {
                         let num_components = attribute.get_data_type().get_shape().get_size() as usize;
@@ -186,29 +192,257 @@ impl VertexStore {
         store
     }
 
-    pub fn put_int(&mut self, attribute: VertexAttributeID, value: i32) {
-        let as_bytes = value.to_ne_bytes();
+    pub fn put_int(&mut self, attribute: VertexAttributeHandle, value: i32) {
         let offset = self.current_offset + attribute.offset;
+        self.put_int_at(offset, value);
+    }
+
+    fn put_int_at(&mut self, offset: usize, value: i32) {
+        let as_bytes = value.to_ne_bytes();
         for index in 0 .. 4 {
             self.raw_buffer[offset + index] = as_bytes[index];
         }
     }
 
-    pub fn put_float(&mut self, attribute: VertexAttributeID, value: f32) {
-        let as_bytes = value.to_ne_bytes();
+    pub fn put_float(&mut self, attribute: VertexAttributeHandle, value: f32) {
         let offset = self.current_offset + attribute.offset;
+        self.put_float_at(offset, value);
+    }
+
+    fn put_float_at(&mut self, offset: usize, value: f32) {
+        let as_bytes = value.to_ne_bytes();
         for index in 0 .. 4 {
             self.raw_buffer[offset + index] = as_bytes[index];
         }
     }
 
-    pub fn put_bool(&mut self, attribute: VertexAttributeID, value: bool) {
+    pub fn put_bool(&mut self, attribute: VertexAttributeHandle, value: bool) {
+        let offset = self.current_offset + attribute.offset;
+        self.put_bool_at(offset, value);
+    }
+
+    fn put_bool_at(&mut self, offset: usize, value: bool) {
         // I think this is how booleans are handled on the GPU, but I'm not sure.
         // I never actually tried this x)
         if value {
-            self.put_int(attribute, 1);
+            self.put_int_at(offset, 1);
         } else {
-            self.put_int(attribute, 0);
+            self.put_int_at(offset, 0);
         }
+    }
+
+    pub fn put_vec2i(&mut self, attribute: VertexAttributeHandle, values: Vector2<i32>) {
+        let base_offset = self.current_offset + attribute.offset;
+        for index in 0 .. 2 {
+            self.put_int_at(base_offset + 4 * index, values[index]);
+        }
+    }
+
+    pub fn put_vec2f(&mut self, attribute: VertexAttributeHandle, values: Vector2<f32>) {
+        let base_offset = self.current_offset + attribute.offset;
+        for index in 0 .. 2 {
+            self.put_float_at(base_offset + 4 * index, values[index]);
+        }
+    }
+
+    pub fn put_vec3i(&mut self, attribute: VertexAttributeHandle, values: Vector3<i32>) {
+        let base_offset = self.current_offset + attribute.offset;
+        for index in 0 .. 3 {
+            self.put_int_at(base_offset + 4 * index, values[index]);
+        }
+    }
+
+    pub fn put_vec3f(&mut self, attribute: VertexAttributeHandle, values: Vector3<f32>) {
+        let base_offset = self.current_offset + attribute.offset;
+        for index in 0 .. 3 {
+            self.put_float_at(base_offset + 4 * index, values[index]);
+        }
+    }
+
+    pub fn put_vec4i(&mut self, attribute: VertexAttributeHandle, values: Vector4<i32>) {
+        let base_offset = self.current_offset + attribute.offset;
+        for index in 0 .. 4 {
+            self.put_int_at(base_offset + 4 * index, values[index]);
+        }
+    }
+
+    pub fn put_vec4f(&mut self, attribute: VertexAttributeHandle, values: Vector4<f32>) {
+        let base_offset = self.current_offset + attribute.offset;
+        for index in 0 .. 4 {
+            self.put_float_at(base_offset + 4 * index, values[index]);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use cgmath::*;
+    use std::convert::TryInto;
+    use super::*;
+
+    #[test]
+    fn test_basic_put_ats() {
+        let mut store = VertexStore {
+            raw_buffer: vec![2; 17],
+            current_offset: 30
+        };
+
+        store.put_bool_at(1, true);
+        store.put_int_at(6, -1234567890);
+        store.put_float_at(12, 4.89176);
+
+        test_basic_helper(store);
+    }
+
+    fn test_basic_helper(store: VertexStore) {
+        // Test that the untouched offsets remain 2
+        assert_eq!(2, store.raw_buffer[0]);
+        assert_eq!(2, store.raw_buffer[5]);
+        assert_eq!(2, store.raw_buffer[10]);
+        assert_eq!(2, store.raw_buffer[11]);
+        assert_eq!(2, store.raw_buffer[16]);
+
+        // Now verify that we can read back the right values
+        let bool_bytes = store.raw_buffer[1 .. 5].try_into().unwrap();
+        let int_bytes = store.raw_buffer[6 .. 10].try_into().unwrap();
+        let float_bytes = store.raw_buffer[12 .. 16].try_into().unwrap();
+        assert_eq!(true, i32::from_ne_bytes(bool_bytes) == 1);
+        assert_eq!(-1234567890, i32::from_ne_bytes(int_bytes));
+        assert_eq!(4.89176, f32::from_ne_bytes(float_bytes));
+    }
+
+    #[test]
+    fn test_basic_puts() {
+        
+        // We abuse our ability to directly create AttributeIDs a bit.
+        // (Regular client code can't create attributes like this.)
+        // But, this is just a unit test anyway.
+        let bool_attribute = VertexAttributeHandle {
+            offset: 1
+        };
+        let int_attribute = VertexAttributeHandle {
+            offset: 6
+        };
+        let float_attribute = VertexAttributeHandle {
+            offset: 12
+        };
+
+        let mut store = VertexStore {
+            raw_buffer: vec![2; 17],
+            current_offset: 0
+        };
+
+        store.put_bool(bool_attribute, true);
+        store.put_int(int_attribute, -1234567890);
+        store.put_float(float_attribute, 4.89176);
+
+        test_basic_helper(store);
+
+        let mut store = VertexStore {
+            raw_buffer: vec![2; 20],
+            current_offset: 3
+        };
+
+        store.put_bool(bool_attribute, true);
+        store.put_int(int_attribute, -1234567890);
+        store.put_float(float_attribute, 4.89176);
+
+        // Removing the first elements should yield the same result as 
+        // we got when using offset 0 instead of offset 3.
+        for _counter in 0 .. store.current_offset {
+            store.raw_buffer.remove(0);
+        }
+
+        test_basic_helper(store);
+    }
+
+    #[test]
+    fn test_vec_puts() {
+
+        // Again abusing direct access to VertexAttributeID
+        let attribute_pos_int = VertexAttributeHandle {
+            offset: 1
+        };
+        let attribute_color_int = VertexAttributeHandle {
+            offset: 10
+        };
+        let attribute_pos_float = VertexAttributeHandle {
+            offset: 23
+        };
+        let attribute_color_float = VertexAttributeHandle {
+            offset: 32
+        };
+        let attribute_translucent_int = VertexAttributeHandle {
+            offset: 45
+        };
+        let attribute_translucent_float = VertexAttributeHandle {
+            offset: 62
+        };
+
+        let mut store = VertexStore {
+            raw_buffer: vec![5; 80],
+            current_offset: 1
+        };
+
+        store.put_vec2i(attribute_pos_int, Vector2 { x: 500, y: -123456 });
+        store.put_vec3i(attribute_color_int, Vector3 { x: 10_000, y: -456543, z: 0 });
+        store.put_vec2f(attribute_pos_float, Vector2 { x: f32::INFINITY, y: 1234.567 });
+        store.put_vec3f(attribute_color_float, Vector3 { x: -98.76, y: 0.0, z: 4.0 });
+        store.put_vec4i(attribute_translucent_int, Vector4 {
+            x: 97, y: -1234567, z: 834, w: 4
+        });
+        store.put_vec4f(attribute_translucent_float, Vector4 {
+            x: 21.3, y: 5.99, z: -91.3, w: 4.0
+        });
+
+        // Test that the default value 5 was never touched
+        assert_eq!(5, store.raw_buffer[0]);
+        assert_eq!(5, store.raw_buffer[1]);
+        assert_eq!(5, store.raw_buffer[10]);
+        assert_eq!(5, store.raw_buffer[23]);
+        assert_eq!(5, store.raw_buffer[32]);
+        assert_eq!(5, store.raw_buffer[45]);
+        assert_eq!(5, store.raw_buffer[62]);
+        assert_eq!(5, store.raw_buffer[79]);
+
+        // We will be reading a lot of values, so lets make it more convenient
+        let get_int_at = |offset: usize| {
+            let bytes = [
+                store.raw_buffer[offset],
+                store.raw_buffer[offset + 1],
+                store.raw_buffer[offset + 2],
+                store.raw_buffer[offset + 3]
+            ];
+            i32::from_ne_bytes(bytes)
+        };
+        let get_float_at = |offset: usize| {
+            let bytes = [
+                store.raw_buffer[offset],
+                store.raw_buffer[offset + 1],
+                store.raw_buffer[offset + 2],
+                store.raw_buffer[offset + 3]
+            ];
+            f32::from_ne_bytes(bytes)
+        };
+
+        assert_eq!(500, get_int_at(2));
+        assert_eq!(-123456, get_int_at(6));
+        assert_eq!(10_000, get_int_at(11));
+        assert_eq!(-456543, get_int_at(15));
+        assert_eq!(0, get_int_at(19));
+        assert_eq!(97, get_int_at(46));
+        assert_eq!(-1234567, get_int_at(50));
+        assert_eq!(834, get_int_at(54));
+        assert_eq!(4, get_int_at(58));
+        assert_eq!(f32::INFINITY, get_float_at(24));
+        assert_eq!(1234.567, get_float_at(28));
+        assert_eq!(-98.76, get_float_at(33));
+        assert_eq!(0.0, get_float_at(37));
+        assert_eq!(4.0, get_float_at(41));
+        assert_eq!(21.3, get_float_at(63));
+        assert_eq!(5.99, get_float_at(67));
+        assert_eq!(-91.3, get_float_at(71));
+        assert_eq!(4.0, get_float_at(75));
     }
 }

@@ -19,3 +19,6 @@ pub use pipeline::*;
 pub use shader::*;
 pub use util::*;
 pub use vertex::*;
+
+#[macro_use]
+extern crate lazy_static;

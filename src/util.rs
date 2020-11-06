@@ -2,10 +2,10 @@ use std::fmt::{
     Display,
     Formatter
 };
-use std::rc::Rc;
+use std::sync::Arc;
 use std::ops::Add;
 
-/// A simple enum that either wraps an *&'static str* or a *Rc<String>*. This type is
+/// A simple enum that either wraps an *&'static str* or a *Arc<String>*. This type is
 /// convenient as string type because both wrapped types can be occasionally
 /// useful. To get an instance of this enum, use *str_ref* or *string_ref*.
 /// 
@@ -21,7 +21,7 @@ use std::ops::Add;
 pub enum StringRef {
 
     Static(&'static str),
-    NonStatic(Rc<String>)
+    NonStatic(Arc<String>)
 }
 
 impl StringRef {
@@ -53,7 +53,7 @@ impl Clone for StringRef {
     fn clone(&self) -> StringRef {
         match self {
             Self::Static(static_ref) => str_ref(static_ref),
-            Self::NonStatic(counter) => StringRef::NonStatic(Rc::clone(&counter))
+            Self::NonStatic(counter) => StringRef::NonStatic(Arc::clone(&counter))
         }
     }
 }
@@ -81,7 +81,7 @@ pub const fn str_ref(string: &'static str) -> StringRef {
 
 /// Creates an *StringRef* instance that wraps the given *String*.
 pub fn string_ref(string: String) -> StringRef {
-    StringRef::NonStatic(Rc::new(string))
+    StringRef::NonStatic(Arc::new(string))
 }
 
 #[cfg(test)]
