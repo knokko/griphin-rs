@@ -8,7 +8,7 @@ pub use store::*;
 
 pub trait Vertex<D> {
 
-    fn store(&self, store: &mut VertexStore, description: &D);
+    fn store(&self, store: &mut VertexStoreBuilder, description: &D);
 }
 
 #[cfg(test)]
@@ -61,7 +61,7 @@ mod tests {
 
     impl Vertex<SimpleVertexDescription> for SimpleVertex {
 
-        fn store(&self, store: &mut VertexStore, description: &SimpleVertexDescription) {
+        fn store(&self, store: &mut VertexStoreBuilder, description: &SimpleVertexDescription) {
             store.put_vec3f(description.position, self.position);
             store.put_vec4f(description.color, self.color);
         }
@@ -87,7 +87,7 @@ mod tests {
             }
         ];
 
-        let mut _store = VertexStore::new(
+        let mut _store = VertexStoreBuilder::new(
             SIMPLE_VERTEX_DESCRIPTION.as_ref(),
             &vertices, DebugLevel::Basic, None
         );
@@ -111,7 +111,7 @@ mod tests {
             }
         ];
 
-        let mut _store = VertexStore::new(
+        let mut _store = VertexStoreBuilder::new(
             &SimpleVertexDescription::new(),
             &vertices, DebugLevel::Basic, None
         );

@@ -1,11 +1,16 @@
 use crate::*;
 use cgmath::*;
 
+use std::io::Write;
+
+/// Represents a byte buffer (or more accurately *Vec\<u8\>*) that is filled with vertex data
+/// (positions, normal vectors...) and ready to be sent through the *Gateway*.
+///
+/// Use the *new* function of this struct to create instances of this struct. See the documentation
+/// of *Vertex* for concrete examples.
 pub struct VertexStore {
 
-    raw_buffer: Vec<u8>,
-
-    current_offset: usize
+    raw_buffer: Vec<u8>
 }
 
 impl VertexStore {
@@ -14,15 +19,18 @@ impl VertexStore {
         description: &D,
         vertices: &Vec<impl Vertex<D>>,
         debug_level: DebugLevel,
-        mut writer: Option<&mut dyn std::io::Write>
+        mut writer: Option<&mut dyn Write>
     ) -> Self {
         let vertex_size = description.get_raw_description().get_size();
         let buffer_size = vertex_size * vertices.len();
-        let mut store = Self { raw_buffer: vec![0; buffer_size], current_offset: 0 };
+        let mut store_builder = VertexStoreBuilder {
+            raw_buffer: vec![0; buffer_size],
+            current_offset: 0
+        };
 
         for vertex in vertices {
-            vertex.store(&mut store, description);
-            store.current_offset += vertex_size;
+            vertex.store(&mut store_builder, description);
+            store_builder.current_offset += vertex_size;
         }
 
         let log_id = "VertexStore::new";
@@ -39,14 +47,17 @@ impl VertexStore {
              * their buffers will be identical if and only if the vertices overwrite
              * all initial values (which they should).
              */
-            let mut store2 = Self { raw_buffer: vec![1; buffer_size], current_offset: 0 };
+            let mut store_builder2 = VertexStoreBuilder {
+                raw_buffer: vec![1; buffer_size],
+                current_offset: 0
+            };
             for vertex in vertices {
-                vertex.store(&mut store2, description);
-                store2.current_offset += vertex_size;
+                vertex.store(&mut store_builder2, description);
+                store_builder2.current_offset += vertex_size;
             }
 
-            if store.raw_buffer != store2.raw_buffer {
-                log(&mut writer, log_id, 
+            if store_builder.raw_buffer != store_builder2.raw_buffer {
+                log(&mut writer, log_id,
                     "Not the entire vertex buffer seems to have been filled.\
                     Did you forget to store one of the vertex attributes?"
                 );
@@ -70,7 +81,7 @@ impl VertexStore {
                     for counter in 0 .. num_components {
                         let mut byte_values = [0; 4];
                         for index in 0 .. 4 {
-                            byte_values[index] = store.raw_buffer[offset + 4 * counter + index];
+                            byte_values[index] = store_builder.raw_buffer[offset + 4 * counter + index];
                         }
                         float_values.push(f32::from_ne_bytes(byte_values));
                         int_values.push(i32::from_ne_bytes(byte_values));
@@ -161,7 +172,7 @@ impl VertexStore {
                             for component_index in 0 .. num_components {
                                 let mut component_bytes = [0; 4];
                                 for byte_index in 0 .. 4 {
-                                    component_bytes[byte_index] = store.raw_buffer[position_offset + 4 * component_index + byte_index];
+                                    component_bytes[byte_index] = store_builder.raw_buffer[position_offset + 4 * component_index + byte_index];
                                 }
                                 position.push(f32::from_ne_bytes(component_bytes));
                             }
@@ -189,7 +200,29 @@ impl VertexStore {
             }
         }
 
-        store
+        store_builder.finish()
+    }
+
+    pub fn get_raw_buffer(&self) -> &Vec<u8> {
+        &self.raw_buffer
+    }
+}
+
+/// A wrapper struct around a raw byte buffer (actually *Vec\<u8\>*) that is being filled with
+/// vertex data (positions, texture coordinates...).
+///
+/// TODO Finish documentation
+pub struct VertexStoreBuilder {
+
+    raw_buffer: Vec<u8>,
+
+    current_offset: usize
+}
+
+impl VertexStoreBuilder {
+
+    fn finish(self) -> VertexStore {
+        VertexStore { raw_buffer: self.raw_buffer }
     }
 
     pub fn put_int(&mut self, attribute: VertexAttributeHandle, value: i32) {
@@ -283,7 +316,7 @@ mod tests {
 
     #[test]
     fn test_basic_put_ats() {
-        let mut store = VertexStore {
+        let mut store = VertexStoreBuilder {
             raw_buffer: vec![2; 17],
             current_offset: 30
         };
@@ -295,7 +328,7 @@ mod tests {
         test_basic_helper(store);
     }
 
-    fn test_basic_helper(store: VertexStore) {
+    fn test_basic_helper(store: VertexStoreBuilder) {
         // Test that the untouched offsets remain 2
         assert_eq!(2, store.raw_buffer[0]);
         assert_eq!(2, store.raw_buffer[5]);
@@ -328,7 +361,7 @@ mod tests {
             offset: 12
         };
 
-        let mut store = VertexStore {
+        let mut store = VertexStoreBuilder {
             raw_buffer: vec![2; 17],
             current_offset: 0
         };
@@ -339,7 +372,7 @@ mod tests {
 
         test_basic_helper(store);
 
-        let mut store = VertexStore {
+        let mut store = VertexStoreBuilder {
             raw_buffer: vec![2; 20],
             current_offset: 3
         };
@@ -380,7 +413,7 @@ mod tests {
             offset: 62
         };
 
-        let mut store = VertexStore {
+        let mut store = VertexStoreBuilder {
             raw_buffer: vec![5; 80],
             current_offset: 1
         };
