@@ -15,6 +15,22 @@ pub struct VertexStore {
 
 impl VertexStore {
 
+    /// Constructs a new *VertexStore* and fills it with the data of the given *vertices*. The
+    /// returned store will be filled completely once this function returns (so it is impossible to
+    /// get any *VertexStore* that is not filled). See the documentation of *Vertex* for examples.
+    ///
+    /// If *debug_level* is at least *Basic*, this function will also check if all vertex attributes
+    /// are actually written. If *debug_level* is at least *High*, this function will do extensive
+    /// checks on the attribute values that the vertices wrote to the store. See the documentation
+    /// of *AttributeKind* for more information about these checks. Note that these checks can be
+    /// really expensive when a lot of vertices are stored! So when you have a lot of vertices, you
+    /// should keep the debug level low, unless something is not working and you would like to
+    /// check the vertex data.
+    ///
+    /// The *writer* parameter determines where all debug messages will be printed. If it is *None*,
+    /// they will be written to the standard output (this is usually what you want). If it is not
+    /// *None*, it will be written to the *writer* itself (this is mostly convenient for the unit
+    /// tests of this module).
     pub fn new<D: VertexDescription>(
         description: &D,
         vertices: &Vec<impl Vertex<D>>,
@@ -203,15 +219,32 @@ impl VertexStore {
         store_builder.finish()
     }
 
+    /// Gets a reference to the raw byte buffer of this *VertexStore*. This method is intended to
+    /// be used by Griphin implementations, but users are free to use it as well.
     pub fn get_raw_buffer(&self) -> &Vec<u8> {
         &self.raw_buffer
     }
 }
 
-/// A wrapper struct around a raw byte buffer (actually *Vec\<u8\>*) that is being filled with
-/// vertex data (positions, texture coordinates...).
+/// A wrapper struct around a raw byte buffer (actually *Vec\<u8\>*) that is currently being filled
+/// with vertex data (positions, texture coordinates...). An instance of this struct is created
+/// during *VertexStore::new* and that instance will be dropped when that function returns.
 ///
-/// TODO Finish documentation
+/// Whenever a *Vertex* is being stored during the *VertexStore::new* function, its *store* method
+/// will be called, and it will get a mutable reference to a *VertexStoreBuilder* as parameter. (If
+/// the debug level is at least *Basic*, this method will even be called twice per vertex.) During
+/// that method call, it should call the *put*... methods of the *VertexStoreBuilder* to store the
+/// values of its attributes. See the documentation of *Vertex* for an example implementation.
+///
+/// This struct has 2 kinds of public methods:
+///
+/// 1) The single-value *put* methods: *put_bool*, *put_int*, and *put_float*
+///
+/// 2) The vector *put_vec* methods like *put_vec3f*
+///
+/// All these methods require a *VertexAttributeHandle* and a value. The attribute handle indicates
+/// for which attribute the value is, and the value is just the value the vertex has for that
+/// attribute.
 pub struct VertexStoreBuilder {
 
     raw_buffer: Vec<u8>,
@@ -225,11 +258,13 @@ impl VertexStoreBuilder {
         VertexStore { raw_buffer: self.raw_buffer }
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_int(&mut self, attribute: VertexAttributeHandle, value: i32) {
         let offset = self.current_offset + attribute.offset;
         self.put_int_at(offset, value);
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     fn put_int_at(&mut self, offset: usize, value: i32) {
         let as_bytes = value.to_ne_bytes();
         for index in 0 .. 4 {
@@ -237,11 +272,13 @@ impl VertexStoreBuilder {
         }
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_float(&mut self, attribute: VertexAttributeHandle, value: f32) {
         let offset = self.current_offset + attribute.offset;
         self.put_float_at(offset, value);
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     fn put_float_at(&mut self, offset: usize, value: f32) {
         let as_bytes = value.to_ne_bytes();
         for index in 0 .. 4 {
@@ -249,11 +286,13 @@ impl VertexStoreBuilder {
         }
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_bool(&mut self, attribute: VertexAttributeHandle, value: bool) {
         let offset = self.current_offset + attribute.offset;
         self.put_bool_at(offset, value);
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     fn put_bool_at(&mut self, offset: usize, value: bool) {
         // I think this is how booleans are handled on the GPU, but I'm not sure.
         // I never actually tried this x)
@@ -264,6 +303,7 @@ impl VertexStoreBuilder {
         }
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec2i(&mut self, attribute: VertexAttributeHandle, values: Vector2<i32>) {
         let base_offset = self.current_offset + attribute.offset;
         for index in 0 .. 2 {
@@ -271,6 +311,7 @@ impl VertexStoreBuilder {
         }
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec2f(&mut self, attribute: VertexAttributeHandle, values: Vector2<f32>) {
         let base_offset = self.current_offset + attribute.offset;
         for index in 0 .. 2 {
@@ -278,6 +319,7 @@ impl VertexStoreBuilder {
         }
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec3i(&mut self, attribute: VertexAttributeHandle, values: Vector3<i32>) {
         let base_offset = self.current_offset + attribute.offset;
         for index in 0 .. 3 {
@@ -285,6 +327,7 @@ impl VertexStoreBuilder {
         }
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec3f(&mut self, attribute: VertexAttributeHandle, values: Vector3<f32>) {
         let base_offset = self.current_offset + attribute.offset;
         for index in 0 .. 3 {
@@ -292,6 +335,7 @@ impl VertexStoreBuilder {
         }
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec4i(&mut self, attribute: VertexAttributeHandle, values: Vector4<i32>) {
         let base_offset = self.current_offset + attribute.offset;
         for index in 0 .. 4 {
@@ -299,6 +343,7 @@ impl VertexStoreBuilder {
         }
     }
 
+    /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec4f(&mut self, attribute: VertexAttributeHandle, values: Vector4<f32>) {
         let base_offset = self.current_offset + attribute.offset;
         for index in 0 .. 4 {
