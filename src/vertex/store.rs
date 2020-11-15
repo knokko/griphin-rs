@@ -33,7 +33,7 @@ impl VertexStore {
     /// tests of this module).
     pub fn new<D: VertexDescription>(
         description: &D,
-        vertices: &Vec<impl Vertex<D>>,
+        vertices: &[impl Vertex<D>],
         debug_level: DebugLevel,
         mut writer: Option<&mut dyn Write>
     ) -> Self {
