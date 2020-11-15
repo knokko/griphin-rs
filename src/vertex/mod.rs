@@ -126,7 +126,6 @@ pub use store::*;
 /// normal vectors have a length of approximately 1.0, that the texture coordinates are between 0.0
 /// and 1.0 (or between 0 and texture size in case of integer texture coordinates)...
 pub trait Vertex<D> {
-
     /// Stores all attribute values of this vertex into the given *VertexStoreBuilder*. See the
     /// documentation of this trait for an example implementation.
     fn store(&self, store: &mut VertexStoreBuilder, description: &D);
@@ -141,29 +140,29 @@ mod tests {
     use std::sync::Arc;
 
     struct SimpleVertexDescription {
-
         raw: RawVertexDescription,
 
         position: VertexAttributeHandle,
-        color: VertexAttributeHandle
+        color: VertexAttributeHandle,
     }
 
     impl SimpleVertexDescription {
-
         fn new() -> Self {
             let mut raw = RawVertexDescription::new();
             let position = raw.add_attribute(
                 &str_ref("position"),
                 DataType::new(FLOAT, VEC3),
-                AttributeKind::Position { max: 4.0 }
+                AttributeKind::Position { max: 4.0 },
             );
             let color = raw.add_attribute(
                 &str_ref("color"),
                 DataType::new(FLOAT, VEC4),
-                AttributeKind::Other
+                AttributeKind::Other,
             );
             Self {
-                raw, position, color
+                raw,
+                position,
+                color,
             }
         }
     }
@@ -175,13 +174,11 @@ mod tests {
     }
 
     struct SimpleVertex {
-
         position: Vector3<f32>,
-        color: Vector4<f32>
+        color: Vector4<f32>,
     }
 
     impl Vertex<SimpleVertexDescription> for SimpleVertex {
-
         fn store(&self, store: &mut VertexStoreBuilder, description: &SimpleVertexDescription) {
             store.put_vec3f(description.position, self.position);
             store.put_vec4f(description.color, self.color);
@@ -189,28 +186,32 @@ mod tests {
     }
 
     lazy_static! {
-        static ref SIMPLE_VERTEX_DESCRIPTION: Arc<SimpleVertexDescription> = Arc::new(SimpleVertexDescription::new());
+        static ref SIMPLE_VERTEX_DESCRIPTION: Arc<SimpleVertexDescription> =
+            Arc::new(SimpleVertexDescription::new());
     }
 
     #[test]
     fn test_static() {
-
         let vertices = vec![
             SimpleVertex {
                 position: Vector3::new(0.0, 1.0, 0.0),
-                color: Vector4::new(1.0, 1.0, 0.0, 0.5)
-            }, SimpleVertex {
+                color: Vector4::new(1.0, 1.0, 0.0, 0.5),
+            },
+            SimpleVertex {
                 position: Vector3::new(1.0, 0.0, 0.0),
-                color: Vector4::new(0.0, 0.0, 1.0, 0.8)
-            }, SimpleVertex {
+                color: Vector4::new(0.0, 0.0, 1.0, 0.8),
+            },
+            SimpleVertex {
                 position: Vector3::new(0.0, -1.0, 1.0),
-                color: Vector4::new(0.5, 1.0, 0.8, 1.0)
-            }
+                color: Vector4::new(0.5, 1.0, 0.8, 1.0),
+            },
         ];
 
         let mut _store = VertexStore::new(
             SIMPLE_VERTEX_DESCRIPTION.as_ref(),
-            &vertices, DebugLevel::Basic, None
+            &vertices,
+            DebugLevel::Basic,
+            None,
         );
 
         // Send the store to the Gateway
@@ -218,23 +219,26 @@ mod tests {
 
     #[test]
     fn test_local() {
-
         let vertices = vec![
             SimpleVertex {
                 position: Vector3::new(0.0, 1.0, 0.0),
-                color: Vector4::new(1.0, 1.0, 0.0, 0.5)
-            }, SimpleVertex {
+                color: Vector4::new(1.0, 1.0, 0.0, 0.5),
+            },
+            SimpleVertex {
                 position: Vector3::new(1.0, 0.0, 0.0),
-                color: Vector4::new(0.0, 0.0, 1.0, 0.8)
-            }, SimpleVertex {
+                color: Vector4::new(0.0, 0.0, 1.0, 0.8),
+            },
+            SimpleVertex {
                 position: Vector3::new(0.0, -1.0, 1.0),
-                color: Vector4::new(0.5, 1.0, 0.8, 1.0)
-            }
+                color: Vector4::new(0.5, 1.0, 0.8, 1.0),
+            },
         ];
 
         let mut _store = VertexStore::new(
             &SimpleVertexDescription::new(),
-            &vertices, DebugLevel::Basic, None
+            &vertices,
+            DebugLevel::Basic,
+            None,
         );
 
         // Send the store to the Gateway

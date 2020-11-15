@@ -105,7 +105,11 @@ pub struct VertexShaderVariable {
 impl VertexShaderVariable {
     /// Constructs a new *VertexShaderVariable* with the given name, data type, and
     /// variable type. This function doesn't do anything fancy.
-    pub fn new(name: &StringRef, data_type: DataType, variable_type: VertexShaderVariableType) -> Self {
+    pub fn new(
+        name: &StringRef,
+        data_type: DataType,
+        variable_type: VertexShaderVariableType,
+    ) -> Self {
         Self {
             name: name.clone(),
             data_type,
@@ -142,7 +146,11 @@ impl FragmentShaderVariable {
     /// Construct a new *FragmentShaderVariable* with the given name, data type, and
     /// variable type. This function acts like a basic constructor and doesn't do
     /// anything special.
-    pub fn new(name: &StringRef, data_type: DataType, variable_type: FragmentShaderVariableType) -> Self {
+    pub fn new(
+        name: &StringRef,
+        data_type: DataType,
+        variable_type: FragmentShaderVariableType,
+    ) -> Self {
         Self {
             name: name.clone(),
             data_type,
@@ -180,7 +188,11 @@ impl ExternalShaderVariable {
     /// Constructs a new *ExternalShaderVariable* with the given name, data type,
     /// and variable type. This function acts like a basic constructor and doesn't
     /// do anything special.
-    pub fn new(name: &StringRef, data_type: DataType, variable_type: ExternalShaderVariableType) -> Self {
+    pub fn new(
+        name: &StringRef,
+        data_type: DataType,
+        variable_type: ExternalShaderVariableType,
+    ) -> Self {
         Self {
             name: name.clone(),
             data_type,

@@ -13,7 +13,6 @@ use std::io::Write;
 /// from method to method because every method has different debugging checks.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub enum DebugLevel {
-
     /// Only the absolutely necessary checks should be done. Use this if you are certain you are
     /// using the function or method correctly.
     Minimal,
@@ -28,12 +27,18 @@ pub enum DebugLevel {
     /// operation itself.
     High,
     /// Do all debug checks.
-    All
+    All,
 }
 
 pub(crate) fn log(writer: &mut Option<&mut dyn Write>, source: &str, message: &str) {
     if writer.is_some() {
-        writeln!(writer.as_mut().unwrap(), "[Griphin] [{}]: {}", source, message).unwrap();
+        writeln!(
+            writer.as_mut().unwrap(),
+            "[Griphin] [{}]: {}",
+            source,
+            message
+        )
+        .unwrap();
     } else {
         println!("[Griphin] [{}]: {}", source, message);
     }

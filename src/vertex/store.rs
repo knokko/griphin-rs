@@ -9,12 +9,10 @@ use std::io::Write;
 /// Use the *new* function of this struct to create instances of this struct. See the documentation
 /// of *Vertex* for concrete examples.
 pub struct VertexStore {
-
-    raw_buffer: Vec<u8>
+    raw_buffer: Vec<u8>,
 }
 
 impl VertexStore {
-
     /// Constructs a new *VertexStore* and fills it with the data of the given *vertices*. The
     /// returned store will be filled completely once this function returns (so it is impossible to
     /// get any *VertexStore* that is not filled). See the documentation of *Vertex* for examples.
@@ -35,13 +33,13 @@ impl VertexStore {
         description: &D,
         vertices: &[impl Vertex<D>],
         debug_level: DebugLevel,
-        mut writer: Option<&mut dyn Write>
+        mut writer: Option<&mut dyn Write>,
     ) -> Self {
         let vertex_size = description.get_raw_description().get_size();
         let buffer_size = vertex_size * vertices.len();
         let mut store_builder = VertexStoreBuilder {
             raw_buffer: vec![0; buffer_size],
-            current_offset: 0
+            current_offset: 0,
         };
 
         for vertex in vertices {
@@ -65,7 +63,7 @@ impl VertexStore {
              */
             let mut store_builder2 = VertexStoreBuilder {
                 raw_buffer: vec![1; buffer_size],
-                current_offset: 0
+                current_offset: 0,
             };
             for vertex in vertices {
                 vertex.store(&mut store_builder2, description);
@@ -73,9 +71,11 @@ impl VertexStore {
             }
 
             if store_builder.raw_buffer != store_builder2.raw_buffer {
-                log(&mut writer, log_id,
+                log(
+                    &mut writer,
+                    log_id,
                     "Not the entire vertex buffer seems to have been filled.\
-                    Did you forget to store one of the vertex attributes?"
+                    Did you forget to store one of the vertex attributes?",
                 );
             }
         }
@@ -87,17 +87,18 @@ impl VertexStore {
              * instance, positions shouldn't be NaN or very big and the length of
              * each normal vector should be approximately 1).
              */
-            for vertex_index in 0 .. vertices.len() {
+            for vertex_index in 0..vertices.len() {
                 let vertex_offset = vertex_index * vertex_size;
                 for attribute in description.get_raw_description().get_attributes() {
                     let offset = attribute.offset + vertex_offset;
                     let num_components = attribute.get_data_type().get_shape().get_size() as usize;
                     let mut float_values = Vec::with_capacity(num_components);
                     let mut int_values = Vec::with_capacity(num_components);
-                    for counter in 0 .. num_components {
+                    for counter in 0..num_components {
                         let mut byte_values = [0; 4];
-                        for index in 0 .. 4 {
-                            byte_values[index] = store_builder.raw_buffer[offset + 4 * counter + index];
+                        for index in 0..4 {
+                            byte_values[index] =
+                                store_builder.raw_buffer[offset + 4 * counter + index];
                         }
                         float_values.push(f32::from_ne_bytes(byte_values));
                         int_values.push(i32::from_ne_bytes(byte_values));
@@ -107,9 +108,13 @@ impl VertexStore {
                     let data_kind = attribute.get_data_type().get_kind();
 
                     match attribute.get_kind() {
-                        AttributeKind::Position{max} => {
+                        AttributeKind::Position { max } => {
                             if data_kind != FLOAT {
-                                log(&mut writer, log_id, "A position vertex attribute is not of type float");
+                                log(
+                                    &mut writer,
+                                    log_id,
+                                    "A position vertex attribute is not of type float",
+                                );
                             }
                             for float_value in float_values {
                                 if float_value.is_nan() {
@@ -118,12 +123,21 @@ impl VertexStore {
                                     log(&mut writer, log_id, "A vertex position is too large");
                                 }
                             }
-                        }, AttributeKind::Normal => {
+                        }
+                        AttributeKind::Normal => {
                             if data_kind != FLOAT {
-                                log(&mut writer, log_id, "A normal vertex attribute is not of type float");
+                                log(
+                                    &mut writer,
+                                    log_id,
+                                    "A normal vertex attribute is not of type float",
+                                );
                             }
                             if data_shape != VEC2 && data_shape != VEC3 {
-                                log(&mut writer, log_id, "A normal vertex attribute is not a 2d or 3d vector");
+                                log(
+                                    &mut writer,
+                                    log_id,
+                                    "A normal vertex attribute is not a 2d or 3d vector",
+                                );
                             } else {
                                 let mut length_squared = 0.0;
                                 for component in float_values {
@@ -133,30 +147,49 @@ impl VertexStore {
                                     log(&mut writer, log_id, "A normal vertex is NaN");
                                 }
                                 if length_squared < 0.95 || length_squared > 1.05 {
-                                    log(&mut writer, log_id, "A normal vertex has a length that is not close to 1.0");
+                                    log(
+                                        &mut writer,
+                                        log_id,
+                                        "A normal vertex has a length that is not close to 1.0",
+                                    );
                                 }
                             }
-                        }, AttributeKind::FloatTexCoords => {
+                        }
+                        AttributeKind::FloatTexCoords => {
                             if data_kind != FLOAT {
-                                log(&mut writer, log_id, "A FloatTexCoords attribute is not of type FLOAT");
+                                log(
+                                    &mut writer,
+                                    log_id,
+                                    "A FloatTexCoords attribute is not of type FLOAT",
+                                );
                             }
                             for coordinate in float_values {
                                 if coordinate.is_nan() {
                                     log(&mut writer, log_id, "A float texture coordinate is NaN");
                                 } else if coordinate < -0.05 || coordinate > 1.05 {
-                                    log(&mut writer, log_id, "A float texture coordinate is not between 0 and 1");
+                                    log(
+                                        &mut writer,
+                                        log_id,
+                                        "A float texture coordinate is not between 0 and 1",
+                                    );
                                 }
                             }
-                        }, AttributeKind::IntTexCoords{texture_size} => {
+                        }
+                        AttributeKind::IntTexCoords { texture_size } => {
                             if data_kind != INT {
-                                log(&mut writer, log_id, "An IntTexCoords attribute is not of type INT");
+                                log(
+                                    &mut writer,
+                                    log_id,
+                                    "An IntTexCoords attribute is not of type INT",
+                                );
                             }
                             for coordinate in int_values {
                                 if coordinate < 0 || coordinate >= texture_size as i32 {
                                     log(&mut writer, log_id, "An IntTexCoords component is negative or not smaller than the texture size");
                                 }
                             }
-                        }, AttributeKind::Index{bound} => {
+                        }
+                        AttributeKind::Index { bound } => {
                             if data_kind != INT {
                                 log(&mut writer, log_id, "An Index attribute is not of type INT");
                             }
@@ -165,7 +198,9 @@ impl VertexStore {
                                     log(&mut writer, log_id, "An index attribute is out of range");
                                 }
                             }
-                        }, AttributeKind::Other => { /* I can't check values for unknown data kinds */ }
+                        }
+                        AttributeKind::Other => { /* I can't check values for unknown data kinds */
+                        }
                     };
                 }
             }
@@ -178,17 +213,19 @@ impl VertexStore {
              */
             for attribute in description.get_raw_description().get_attributes() {
                 match attribute.get_kind() {
-                    AttributeKind::Position{max: _} => {
-                        let num_components = attribute.get_data_type().get_shape().get_size() as usize;
+                    AttributeKind::Position { max: _ } => {
+                        let num_components =
+                            attribute.get_data_type().get_shape().get_size() as usize;
                         let mut positions = Vec::new();
-                        for vertex_index in 0 .. vertices.len() {
+                        for vertex_index in 0..vertices.len() {
                             let vertex_offset = vertex_index * vertex_size;
                             let position_offset = vertex_offset + attribute.offset;
                             let mut position = Vec::with_capacity(num_components);
-                            for component_index in 0 .. num_components {
+                            for component_index in 0..num_components {
                                 let mut component_bytes = [0; 4];
-                                for byte_index in 0 .. 4 {
-                                    component_bytes[byte_index] = store_builder.raw_buffer[position_offset + 4 * component_index + byte_index];
+                                for byte_index in 0..4 {
+                                    component_bytes[byte_index] = store_builder.raw_buffer
+                                        [position_offset + 4 * component_index + byte_index];
                                 }
                                 position.push(f32::from_ne_bytes(component_bytes));
                             }
@@ -209,9 +246,14 @@ impl VertexStore {
                         }
 
                         if many_equals {
-                            log(&mut writer, log_id, "More than half of the vertices has the same position");
+                            log(
+                                &mut writer,
+                                log_id,
+                                "More than half of the vertices has the same position",
+                            );
                         }
-                    }, _ => {}
+                    }
+                    _ => {}
                 }
             }
         }
@@ -246,16 +288,16 @@ impl VertexStore {
 /// for which attribute the value is, and the value is just the value the vertex has for that
 /// attribute.
 pub struct VertexStoreBuilder {
-
     raw_buffer: Vec<u8>,
 
-    current_offset: usize
+    current_offset: usize,
 }
 
 impl VertexStoreBuilder {
-
     fn finish(self) -> VertexStore {
-        VertexStore { raw_buffer: self.raw_buffer }
+        VertexStore {
+            raw_buffer: self.raw_buffer,
+        }
     }
 
     /// Sets the value for *attribute* for the current vertex to *value*
@@ -267,7 +309,7 @@ impl VertexStoreBuilder {
     /// Sets the value for *attribute* for the current vertex to *value*
     fn put_int_at(&mut self, offset: usize, value: i32) {
         let as_bytes = value.to_ne_bytes();
-        for index in 0 .. 4 {
+        for index in 0..4 {
             self.raw_buffer[offset + index] = as_bytes[index];
         }
     }
@@ -281,7 +323,7 @@ impl VertexStoreBuilder {
     /// Sets the value for *attribute* for the current vertex to *value*
     fn put_float_at(&mut self, offset: usize, value: f32) {
         let as_bytes = value.to_ne_bytes();
-        for index in 0 .. 4 {
+        for index in 0..4 {
             self.raw_buffer[offset + index] = as_bytes[index];
         }
     }
@@ -306,7 +348,7 @@ impl VertexStoreBuilder {
     /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec2i(&mut self, attribute: VertexAttributeHandle, values: Vector2<i32>) {
         let base_offset = self.current_offset + attribute.offset;
-        for index in 0 .. 2 {
+        for index in 0..2 {
             self.put_int_at(base_offset + 4 * index, values[index]);
         }
     }
@@ -314,7 +356,7 @@ impl VertexStoreBuilder {
     /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec2f(&mut self, attribute: VertexAttributeHandle, values: Vector2<f32>) {
         let base_offset = self.current_offset + attribute.offset;
-        for index in 0 .. 2 {
+        for index in 0..2 {
             self.put_float_at(base_offset + 4 * index, values[index]);
         }
     }
@@ -322,7 +364,7 @@ impl VertexStoreBuilder {
     /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec3i(&mut self, attribute: VertexAttributeHandle, values: Vector3<i32>) {
         let base_offset = self.current_offset + attribute.offset;
-        for index in 0 .. 3 {
+        for index in 0..3 {
             self.put_int_at(base_offset + 4 * index, values[index]);
         }
     }
@@ -330,7 +372,7 @@ impl VertexStoreBuilder {
     /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec3f(&mut self, attribute: VertexAttributeHandle, values: Vector3<f32>) {
         let base_offset = self.current_offset + attribute.offset;
-        for index in 0 .. 3 {
+        for index in 0..3 {
             self.put_float_at(base_offset + 4 * index, values[index]);
         }
     }
@@ -338,7 +380,7 @@ impl VertexStoreBuilder {
     /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec4i(&mut self, attribute: VertexAttributeHandle, values: Vector4<i32>) {
         let base_offset = self.current_offset + attribute.offset;
-        for index in 0 .. 4 {
+        for index in 0..4 {
             self.put_int_at(base_offset + 4 * index, values[index]);
         }
     }
@@ -346,7 +388,7 @@ impl VertexStoreBuilder {
     /// Sets the value for *attribute* for the current vertex to *value*
     pub fn put_vec4f(&mut self, attribute: VertexAttributeHandle, values: Vector4<f32>) {
         let base_offset = self.current_offset + attribute.offset;
-        for index in 0 .. 4 {
+        for index in 0..4 {
             self.put_float_at(base_offset + 4 * index, values[index]);
         }
     }
@@ -355,15 +397,15 @@ impl VertexStoreBuilder {
 #[cfg(test)]
 mod tests {
 
+    use super::*;
     use cgmath::*;
     use std::convert::TryInto;
-    use super::*;
 
     #[test]
     fn test_basic_put_ats() {
         let mut store = VertexStoreBuilder {
             raw_buffer: vec![2; 17],
-            current_offset: 30
+            current_offset: 30,
         };
 
         store.put_bool_at(1, true);
@@ -382,9 +424,9 @@ mod tests {
         assert_eq!(2, store.raw_buffer[16]);
 
         // Now verify that we can read back the right values
-        let bool_bytes = store.raw_buffer[1 .. 5].try_into().unwrap();
-        let int_bytes = store.raw_buffer[6 .. 10].try_into().unwrap();
-        let float_bytes = store.raw_buffer[12 .. 16].try_into().unwrap();
+        let bool_bytes = store.raw_buffer[1..5].try_into().unwrap();
+        let int_bytes = store.raw_buffer[6..10].try_into().unwrap();
+        let float_bytes = store.raw_buffer[12..16].try_into().unwrap();
         assert_eq!(true, i32::from_ne_bytes(bool_bytes) == 1);
         assert_eq!(-1234567890, i32::from_ne_bytes(int_bytes));
         assert_eq!(4.89176, f32::from_ne_bytes(float_bytes));
@@ -392,23 +434,16 @@ mod tests {
 
     #[test]
     fn test_basic_puts() {
-        
         // We abuse our ability to directly create AttributeIDs a bit.
         // (Regular client code can't create attributes like this.)
         // But, this is just a unit test anyway.
-        let bool_attribute = VertexAttributeHandle {
-            offset: 1
-        };
-        let int_attribute = VertexAttributeHandle {
-            offset: 6
-        };
-        let float_attribute = VertexAttributeHandle {
-            offset: 12
-        };
+        let bool_attribute = VertexAttributeHandle { offset: 1 };
+        let int_attribute = VertexAttributeHandle { offset: 6 };
+        let float_attribute = VertexAttributeHandle { offset: 12 };
 
         let mut store = VertexStoreBuilder {
             raw_buffer: vec![2; 17],
-            current_offset: 0
+            current_offset: 0,
         };
 
         store.put_bool(bool_attribute, true);
@@ -419,16 +454,16 @@ mod tests {
 
         let mut store = VertexStoreBuilder {
             raw_buffer: vec![2; 20],
-            current_offset: 3
+            current_offset: 3,
         };
 
         store.put_bool(bool_attribute, true);
         store.put_int(int_attribute, -1234567890);
         store.put_float(float_attribute, 4.89176);
 
-        // Removing the first elements should yield the same result as 
+        // Removing the first elements should yield the same result as
         // we got when using offset 0 instead of offset 3.
-        for _counter in 0 .. store.current_offset {
+        for _counter in 0..store.current_offset {
             store.raw_buffer.remove(0);
         }
 
@@ -437,42 +472,61 @@ mod tests {
 
     #[test]
     fn test_vec_puts() {
-
         // Again abusing direct access to VertexAttributeID
-        let attribute_pos_int = VertexAttributeHandle {
-            offset: 1
-        };
-        let attribute_color_int = VertexAttributeHandle {
-            offset: 10
-        };
-        let attribute_pos_float = VertexAttributeHandle {
-            offset: 23
-        };
-        let attribute_color_float = VertexAttributeHandle {
-            offset: 32
-        };
-        let attribute_translucent_int = VertexAttributeHandle {
-            offset: 45
-        };
-        let attribute_translucent_float = VertexAttributeHandle {
-            offset: 62
-        };
+        let attribute_pos_int = VertexAttributeHandle { offset: 1 };
+        let attribute_color_int = VertexAttributeHandle { offset: 10 };
+        let attribute_pos_float = VertexAttributeHandle { offset: 23 };
+        let attribute_color_float = VertexAttributeHandle { offset: 32 };
+        let attribute_translucent_int = VertexAttributeHandle { offset: 45 };
+        let attribute_translucent_float = VertexAttributeHandle { offset: 62 };
 
         let mut store = VertexStoreBuilder {
             raw_buffer: vec![5; 80],
-            current_offset: 1
+            current_offset: 1,
         };
 
         store.put_vec2i(attribute_pos_int, Vector2 { x: 500, y: -123456 });
-        store.put_vec3i(attribute_color_int, Vector3 { x: 10_000, y: -456543, z: 0 });
-        store.put_vec2f(attribute_pos_float, Vector2 { x: f32::INFINITY, y: 1234.567 });
-        store.put_vec3f(attribute_color_float, Vector3 { x: -98.76, y: 0.0, z: 4.0 });
-        store.put_vec4i(attribute_translucent_int, Vector4 {
-            x: 97, y: -1234567, z: 834, w: 4
-        });
-        store.put_vec4f(attribute_translucent_float, Vector4 {
-            x: 21.3, y: 5.99, z: -91.3, w: 4.0
-        });
+        store.put_vec3i(
+            attribute_color_int,
+            Vector3 {
+                x: 10_000,
+                y: -456543,
+                z: 0,
+            },
+        );
+        store.put_vec2f(
+            attribute_pos_float,
+            Vector2 {
+                x: f32::INFINITY,
+                y: 1234.567,
+            },
+        );
+        store.put_vec3f(
+            attribute_color_float,
+            Vector3 {
+                x: -98.76,
+                y: 0.0,
+                z: 4.0,
+            },
+        );
+        store.put_vec4i(
+            attribute_translucent_int,
+            Vector4 {
+                x: 97,
+                y: -1234567,
+                z: 834,
+                w: 4,
+            },
+        );
+        store.put_vec4f(
+            attribute_translucent_float,
+            Vector4 {
+                x: 21.3,
+                y: 5.99,
+                z: -91.3,
+                w: 4.0,
+            },
+        );
 
         // Test that the default value 5 was never touched
         assert_eq!(5, store.raw_buffer[0]);
@@ -490,7 +544,7 @@ mod tests {
                 store.raw_buffer[offset],
                 store.raw_buffer[offset + 1],
                 store.raw_buffer[offset + 2],
-                store.raw_buffer[offset + 3]
+                store.raw_buffer[offset + 3],
             ];
             i32::from_ne_bytes(bytes)
         };
@@ -499,7 +553,7 @@ mod tests {
                 store.raw_buffer[offset],
                 store.raw_buffer[offset + 1],
                 store.raw_buffer[offset + 2],
-                store.raw_buffer[offset + 3]
+                store.raw_buffer[offset + 3],
             ];
             f32::from_ne_bytes(bytes)
         };

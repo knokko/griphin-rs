@@ -12,23 +12,29 @@ use crate::*;
 /// documentation of *Vertex* for examples on how to do this.
 #[derive(Debug)]
 pub struct RawVertexDescription {
-
     attributes: Vec<VertexAttribute>,
-    current_offset: usize
+    current_offset: usize,
 }
 
 impl RawVertexDescription {
-
     /// Creates a new and empty *RawVertexDescription*. You should probably add some attributes
     /// using the *add_attribute* method.
     pub fn new() -> Self {
-        Self { attributes: Vec::new(), current_offset: 0 }
+        Self {
+            attributes: Vec::new(),
+            current_offset: 0,
+        }
     }
 
     /// Adds a new attribute to this vertex description, and returns a handle to it. You need to
     /// pass its *name*, *DataType*, and *AttributeKind* as parameters. See the documentation of
     /// *DataType* and *AttributeKind* for more information about these types.
-    pub fn add_attribute(&mut self, name: &StringRef, data_type: DataType, kind: AttributeKind) -> VertexAttributeHandle {
+    pub fn add_attribute(
+        &mut self,
+        name: &StringRef,
+        data_type: DataType,
+        kind: AttributeKind,
+    ) -> VertexAttributeHandle {
         let old_offset = self.current_offset;
         let attribute = VertexAttribute::new(name, data_type, kind, old_offset);
         self.current_offset += (data_type.get_shape().get_size() as usize) * 4;
@@ -55,7 +61,6 @@ impl RawVertexDescription {
 ///
 /// The documentation of *Vertex* has examples that show how to use this trait.
 pub trait VertexDescription {
-
     /// Gets a reference to the *RawVertexDescription* wrapped by this *VertexDescription*
     fn get_raw_description(&self) -> &RawVertexDescription;
 }

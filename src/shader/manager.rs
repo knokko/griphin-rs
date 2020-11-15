@@ -147,5 +147,9 @@ pub trait ShaderManager: Debug + Send + Sync + 'static {
     ///     result
     /// }
     /// ```
-    fn create_library(&self, debug_name: &StringRef, functions: &StringRef) -> Arc<dyn ShaderLibrary>;
+    fn create_library(
+        &self,
+        debug_name: &StringRef,
+        functions: &StringRef,
+    ) -> Arc<dyn ShaderLibrary>;
 }

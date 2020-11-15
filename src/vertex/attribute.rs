@@ -3,24 +3,32 @@ use crate::*;
 /// Represents an attribute of a *RawVertexDescription*. A *VertexAttribute* has a
 /// name, *DataType*, and *AttributeKind*. It also has an offset, but that is
 /// only for internal use.
-/// 
+///
 /// To get an instance of this struct, use the *add_attribute* method of
 /// an instance of *RawVertexDescription*. You should store every *VertexAttribute*
 /// you create, because the implementation of *Vertex* corresponding to the
 /// *VertexDescription* will need it to implement its *store* method.
 #[derive(Debug)]
 pub struct VertexAttribute {
-
     name: StringRef,
     data_type: DataType,
     kind: AttributeKind,
-    pub(super) offset: usize
+    pub(super) offset: usize,
 }
 
 impl VertexAttribute {
-
-    pub(super) fn new(name: &StringRef, data_type: DataType, kind: AttributeKind, offset: usize) -> Self {
-        Self { name: name.clone(), data_type, kind, offset }
+    pub(super) fn new(
+        name: &StringRef,
+        data_type: DataType,
+        kind: AttributeKind,
+        offset: usize,
+    ) -> Self {
+        Self {
+            name: name.clone(),
+            data_type,
+            kind,
+            offset,
+        }
     }
 
     /// Gets the name of this attribute
@@ -48,8 +56,7 @@ impl VertexAttribute {
 /// See the documentation of *Vertex* for details and examples.
 #[derive(Clone, Copy, Debug)]
 pub struct VertexAttributeHandle {
-
-    pub(super) offset: usize
+    pub(super) offset: usize,
 }
 
 /// This enum is used to define what the purpose of a vertex attribute is, and thus what the
@@ -61,7 +68,6 @@ pub struct VertexAttributeHandle {
 /// See the documentation of the individual enum options for more information.
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum AttributeKind {
-
     /// This should be used for attributes that represent a position (in the world or on the
     /// screen).
     ///
@@ -83,7 +89,7 @@ pub enum AttributeKind {
     /// If any of these checks fails, it is likely that (parts of) the object to be drawn will not
     /// be visible on the screen, without any errors being raised on the side of the graphics card.
     /// These checks could spare you a lot of debugging if such a situation occurs.
-    Position{max: f32},
+    Position { max: f32 },
 
     /// This enum option should be used for vertex attributes that represent a normal vector. This
     /// enum option has no additional parameters.
@@ -133,7 +139,7 @@ pub enum AttributeKind {
     /// 2) One of the components of the texture coordinates is negative
     ///
     /// 3) One of the components of the texture coordinates is not smaller than *texture_size*
-    IntTexCoords{texture_size: u32},
+    IntTexCoords { texture_size: u32 },
 
     /// This enum option should be used for vertex attributes that will be used as index into some
     /// array.
@@ -148,10 +154,10 @@ pub enum AttributeKind {
     /// 2) One of the indices is negative
     ///
     /// 3) One of the indices is not smaller than *bound*
-    Index{bound: u32},
+    Index { bound: u32 },
 
     /// This enum option should be used for vertex attributes that do not fit into the categories
     /// of any of the other options of this enum. No additional validation checks will be done for
     /// these attributes.
-    Other
+    Other,
 }
