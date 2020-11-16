@@ -190,6 +190,39 @@ mod tests {
             Arc::new(SimpleVertexDescription::new());
     }
 
+    struct PositionVertexDescription {
+        raw: RawVertexDescription,
+        position: VertexAttributeHandle
+    }
+
+    impl PositionVertexDescription {
+        fn new() -> Self {
+            let mut raw = RawVertexDescription::new();
+            let position = raw.add_attribute(
+                &str_ref("position"),
+                DataType::new(FLOAT, VEC2),
+                AttributeKind::Position { max: 10.0 }
+            );
+            Self { raw, position }
+        }
+    }
+
+    impl VertexDescription for PositionVertexDescription {
+        fn get_raw_description(&self) -> &RawVertexDescription {
+            &self.raw
+        }
+    }
+
+    struct PositionVertex {
+        position: Vector2<f32>
+    }
+
+    impl Vertex<PositionVertexDescription> for PositionVertex {
+        fn store(&self, store: &mut VertexStoreBuilder, description: &PositionVertexDescription) {
+            store.put_vec2f(description.position, self.position);
+        }
+    }
+
     #[test]
     fn test_static() {
         let vertices = vec![
@@ -242,5 +275,313 @@ mod tests {
         );
 
         // Send the store to the Gateway
+    }
+
+    #[test]
+    fn test_no_vertices() {
+        let vertices: Vec<SimpleVertex> = vec![];
+        let mut output = Vec::new();
+        VertexStore::new(
+            SIMPLE_VERTEX_DESCRIPTION.as_ref(),
+            &vertices, DebugLevel::Low, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("You passed an empty slice of vertices."));
+    }
+
+    #[test]
+    fn test_no_attributes() {
+        struct EmptyVertexDescription {
+            raw: RawVertexDescription
+        }
+        impl VertexDescription for EmptyVertexDescription {
+            fn get_raw_description(&self) -> &RawVertexDescription {
+                &self.raw
+            }
+        }
+
+        struct EmptyVertex {}
+        impl Vertex<EmptyVertexDescription> for EmptyVertex {
+            fn store(&self, _store: &mut VertexStoreBuilder, _description: &EmptyVertexDescription) {
+            }
+        }
+
+        let vertices = [EmptyVertex {}];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &EmptyVertexDescription{raw: RawVertexDescription::new()}, &vertices,
+            DebugLevel::Low, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("The vertex description doesn't have any attributes"));
+    }
+
+    #[test]
+    fn test_unwritten_attribute() {
+        struct BadSimpleVertex {
+
+            position: Vector3<f32>
+        }
+
+        impl Vertex<SimpleVertexDescription> for BadSimpleVertex {
+            fn store(&self, store: &mut VertexStoreBuilder, description: &SimpleVertexDescription) {
+                store.put_vec3f(description.position, self.position);
+            }
+        }
+
+        let vertices = [
+            BadSimpleVertex {position: Vector3 { x: 0.0, y: 1.0, z: 2.0 } }
+        ];
+
+        let mut writer = Vec::new();
+
+        VertexStore::new(
+            SIMPLE_VERTEX_DESCRIPTION.as_ref(),
+            &vertices, DebugLevel::Basic, Some(&mut writer)
+        );
+
+        let output = String::from_utf8(writer).expect("Error message should be valid UTF-8");
+        assert!(output.contains("Not the entire vertex buffer seems to have been filled"));
+    }
+
+    #[test]
+    fn test_int_position() {
+        struct IntPosVertexDescription {
+            raw: RawVertexDescription,
+            position: VertexAttributeHandle
+        }
+
+        impl IntPosVertexDescription {
+            fn new() -> Self {
+                let mut raw = RawVertexDescription::new();
+                let position = raw.add_attribute(
+                    &str_ref("position"),
+                    DataType::new(INT, VEC2),
+                    AttributeKind::Position { max: 1.0 }
+                );
+                Self { raw, position }
+            }
+        }
+
+        impl VertexDescription for IntPosVertexDescription {
+            fn get_raw_description(&self) -> &RawVertexDescription {
+                &self.raw
+            }
+        }
+
+        struct IntPosVertex {
+            position: Vector2<i32>
+        }
+
+        impl Vertex<IntPosVertexDescription> for IntPosVertex {
+            fn store(&self, store: &mut VertexStoreBuilder, description: &IntPosVertexDescription) {
+                store.put_vec2i(description.position, self.position);
+            }
+        }
+
+        let vertices = [IntPosVertex { position: Vector2 { x: 10, y: 5 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &IntPosVertexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A position vertex attribute is not of type float"));
+    }
+
+    #[test]
+    fn test_nan_position() {
+        let vertices = [PositionVertex { position: Vector2 { x: f32::NAN, y: 0.5 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &PositionVertexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A vertex position component is NaN"));
+    }
+
+    #[test]
+    fn test_big_position() {
+        let vertices = [PositionVertex { position: Vector2 { x: 10.1, y: 0.5 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &PositionVertexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A vertex position component is too large"))
+    }
+
+    #[test]
+    fn test_small_position() {
+        let vertices = [PositionVertex { position: Vector2 { x: 10.0, y: -10.5 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &PositionVertexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A vertex position component is too small"))
+    }
+
+    #[test]
+    fn test_normal_int() {
+        struct IntNormalDescription {
+            raw: RawVertexDescription,
+            normal: VertexAttributeHandle
+        }
+
+        impl IntNormalDescription {
+            fn new() -> Self {
+                let mut raw = RawVertexDescription::new();
+                let normal = raw.add_attribute(
+                    &str_ref("normal"),
+                    DataType::new(INT, VEC2),
+                    AttributeKind::Normal
+                );
+                Self { raw, normal }
+            }
+        }
+
+        impl VertexDescription for IntNormalDescription {
+            fn get_raw_description(&self) -> &RawVertexDescription {
+                &self.raw
+            }
+        }
+
+        struct IntNormalVertex {
+            normal: Vector2<i32>
+        }
+
+        impl Vertex<IntNormalDescription> for IntNormalVertex {
+            fn store(&self, store: &mut VertexStoreBuilder, description: &IntNormalDescription) {
+                store.put_vec2i(description.normal, self.normal);
+            }
+        }
+
+        let vertices = [IntNormalVertex { normal: Vector2 { x: 1, y: 0 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &IntNormalDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A normal vertex attribute is not of type float"));
+    }
+
+    #[test]
+    fn test_normal_single() {
+        struct SingleNormalDescription {
+            raw: RawVertexDescription,
+            normal: VertexAttributeHandle
+        }
+
+        impl SingleNormalDescription {
+            fn new() -> Self {
+                let mut raw = RawVertexDescription::new();
+                let normal = raw.add_attribute(
+                    &str_ref("normal"),
+                    DataType::new(FLOAT, SINGLE),
+                    AttributeKind::Normal
+                );
+                Self { raw, normal }
+            }
+        }
+
+        impl VertexDescription for SingleNormalDescription {
+            fn get_raw_description(&self) -> &RawVertexDescription {
+                &self.raw
+            }
+        }
+
+        struct SingleNormalVertex {
+            normal: f32
+        }
+
+        impl Vertex<SingleNormalDescription> for SingleNormalVertex {
+            fn store(&self, store: &mut VertexStoreBuilder, description: &SingleNormalDescription) {
+                store.put_float(description.normal, self.normal);
+            }
+        }
+
+        let vertices = [SingleNormalVertex { normal: 1.0 }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &SingleNormalDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A normal vertex attribute is not a 2d or 3d vector"));
+    }
+
+    struct NormalVertexDescription {
+        raw: RawVertexDescription,
+        normal: VertexAttributeHandle
+    }
+
+    impl NormalVertexDescription {
+        fn new() -> Self {
+            let mut raw = RawVertexDescription::new();
+            let normal = raw.add_attribute(
+                &str_ref("normal"),
+                DataType::new(FLOAT, VEC2),
+                AttributeKind::Normal
+            );
+            Self { raw, normal }
+        }
+    }
+
+    impl VertexDescription for NormalVertexDescription {
+        fn get_raw_description(&self) -> &RawVertexDescription {
+            &self.raw
+        }
+    }
+
+    struct NormalVertex {
+        normal: Vector2<f32>
+    }
+
+    impl Vertex<NormalVertexDescription> for NormalVertex {
+        fn store(&self, store: &mut VertexStoreBuilder, description: &NormalVertexDescription) {
+            store.put_vec2f(description.normal, self.normal);
+        }
+    }
+
+    #[test]
+    fn test_nan_normal() {
+        let vertices = [NormalVertex { normal: Vector2 { x: 1.0, y: f32::NAN } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &NormalVertexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A normal vertex component is NaN"))
+    }
+
+    #[test]
+    fn test_large_normal() {
+        let vertices = [NormalVertex { normal: Vector2 { x: -0.8, y: -0.7 }}];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &NormalVertexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A normal vertex has a length that is larger than 1.05"));
+    }
+
+    #[test]
+    fn test_small_normal() {
+        let vertices = [NormalVertex { normal: Vector2 { x: 0.5, y: 0.6 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &NormalVertexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A normal vertex has a length that is smaller than 0.95"));
     }
 }

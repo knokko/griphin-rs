@@ -35,6 +35,18 @@ impl VertexStore {
         debug_level: DebugLevel,
         mut writer: Option<&mut dyn Write>,
     ) -> Self {
+
+        let log_id = "VertexStore::new";
+
+        // Check if there is at least 1 vertex and at least 1 attribute
+        if debug_level >= DebugLevel::Low {
+            if vertices.is_empty() {
+                log(&mut writer, log_id, "You passed an empty slice of vertices.");
+            }
+            if description.get_raw_description().get_attributes().is_empty() {
+                log(&mut writer, log_id, "The vertex description doesn't have any attributes.");
+            }
+        }
         let vertex_size = description.get_raw_description().get_size();
         let buffer_size = vertex_size * vertices.len();
         let mut store_builder = VertexStoreBuilder {
@@ -46,8 +58,6 @@ impl VertexStore {
             vertex.store(&mut store_builder, description);
             store_builder.current_offset += vertex_size;
         }
-
-        let log_id = "VertexStore::new";
 
         if debug_level >= DebugLevel::Basic {
             /*
@@ -118,9 +128,11 @@ impl VertexStore {
                             }
                             for float_value in float_values {
                                 if float_value.is_nan() {
-                                    log(&mut writer, log_id, "A vertex position is NaN");
-                                } else if float_value > max || float_value < -max {
-                                    log(&mut writer, log_id, "A vertex position is too large");
+                                    log(&mut writer, log_id, "A vertex position component is NaN");
+                                } else if float_value > max {
+                                    log(&mut writer, log_id, "A vertex position component is too large");
+                                } else if float_value < -max {
+                                    log(&mut writer, log_id, "A vertex position component is too small");
                                 }
                             }
                         }
@@ -144,13 +156,16 @@ impl VertexStore {
                                     length_squared += component * component;
                                 }
                                 if length_squared.is_nan() {
-                                    log(&mut writer, log_id, "A normal vertex is NaN");
+                                    log(&mut writer, log_id, "A normal vertex component is NaN");
                                 }
-                                if length_squared < 0.95 || length_squared > 1.05 {
+                                if length_squared > 1.05 {
+                                    log(&mut writer, log_id,
+                                        "A normal vertex has a length that is larger than 1.05");
+                                }
+                                if length_squared < 0.95 {
                                     log(
-                                        &mut writer,
-                                        log_id,
-                                        "A normal vertex has a length that is not close to 1.0",
+                                        &mut writer, log_id,
+                                        "A normal vertex has a length that is smaller than 0.95"
                                     );
                                 }
                             }
@@ -398,7 +413,6 @@ impl VertexStoreBuilder {
 mod tests {
 
     use super::*;
-    use cgmath::*;
     use std::convert::TryInto;
 
     #[test]
