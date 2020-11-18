@@ -181,11 +181,17 @@ impl VertexStore {
                             for coordinate in float_values {
                                 if coordinate.is_nan() {
                                     log(&mut writer, log_id, "A float texture coordinate is NaN");
-                                } else if coordinate < -0.05 || coordinate > 1.05 {
+                                } else if coordinate < -0.05 {
                                     log(
                                         &mut writer,
                                         log_id,
-                                        "A float texture coordinate is not between 0 and 1",
+                                        "A float texture coordinate is smaller than -0.05"
+                                    );
+                                } else if coordinate > 1.05 {
+                                    log(
+                                        &mut writer,
+                                        log_id,
+                                        "A float texture coordinate is larger than 1.05"
                                     );
                                 }
                             }
@@ -199,14 +205,16 @@ impl VertexStore {
                                 );
                             }
                             for coordinate in int_values {
-                                if coordinate < 0 || coordinate >= texture_size as i32 {
-                                    log(&mut writer, log_id, "An IntTexCoords component is negative or not smaller than the texture size");
+                                if coordinate < 0 {
+                                    log(&mut writer, log_id, "An IntTexCoords component is negative");
+                                } else if coordinate >= texture_size as i32 {
+                                    log(&mut writer, log_id, "An IntTexCoords component is not smaller than the texture size");
                                 }
                             }
                         }
                         AttributeKind::Index { bound } => {
                             if data_kind != INT {
-                                log(&mut writer, log_id, "An Index attribute is not of type INT");
+                                log(&mut writer, log_id, "An index attribute is not of type INT");
                             }
                             for index in int_values {
                                 if index < 0 || index >= bound as i32 {

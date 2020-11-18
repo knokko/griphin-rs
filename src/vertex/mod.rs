@@ -584,4 +584,302 @@ mod tests {
         let output_string = String::from_utf8(output).unwrap();
         assert!(output_string.contains("A normal vertex has a length that is smaller than 0.95"));
     }
+
+    #[test]
+    fn test_float_int_tex_coords() {
+        struct FloatIntTexDescription {
+            raw: RawVertexDescription,
+            tex_coords: VertexAttributeHandle
+        }
+
+        impl FloatIntTexDescription {
+            fn new() -> Self {
+                let mut raw = RawVertexDescription::new();
+                let tex_coords = raw.add_attribute(
+                    &str_ref("texCoords"),
+                    DataType::new(FLOAT, VEC2),
+                    AttributeKind::IntTexCoords { texture_size: 128 }
+                );
+                Self { raw, tex_coords }
+            }
+        }
+
+        impl VertexDescription for FloatIntTexDescription {
+            fn get_raw_description(&self) -> &RawVertexDescription {
+                &self.raw
+            }
+        }
+
+        struct FloatIntTexVertex {
+            tex_coords: Vector2<f32>
+        }
+
+        impl Vertex<FloatIntTexDescription> for FloatIntTexVertex {
+            fn store(&self, store: &mut VertexStoreBuilder, description: &FloatIntTexDescription) {
+                store.put_vec2f(description.tex_coords, self.tex_coords);
+            }
+        }
+
+        let vertices = [FloatIntTexVertex { tex_coords: Vector2 { x: 0.5, y: 0.8 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &FloatIntTexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("An IntTexCoords attribute is not of type INT"));
+    }
+
+    #[test]
+    fn test_int_float_tex_coords() {
+        struct IntFloatTexDescription {
+            raw: RawVertexDescription,
+            tex_coords: VertexAttributeHandle
+        }
+
+        impl IntFloatTexDescription {
+            fn new() -> Self {
+                let mut raw = RawVertexDescription::new();
+                let tex_coords = raw.add_attribute(
+                    &str_ref("texCoords"),
+                    DataType::new(INT, VEC2),
+                    AttributeKind::FloatTexCoords
+                );
+                Self { raw, tex_coords }
+            }
+        }
+
+        impl VertexDescription for IntFloatTexDescription {
+            fn get_raw_description(&self) -> &RawVertexDescription {
+                &self.raw
+            }
+        }
+
+        struct IntFloatTexVertex {
+            tex_coords: Vector2<i32>
+        }
+
+        impl Vertex<IntFloatTexDescription> for IntFloatTexVertex {
+            fn store(&self, store: &mut VertexStoreBuilder, description: &IntFloatTexDescription) {
+                store.put_vec2i(description.tex_coords, self.tex_coords);
+            }
+        }
+
+        let vertices = [IntFloatTexVertex { tex_coords: Vector2 { x: 5, y: 8 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &IntFloatTexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A FloatTexCoords attribute is not of type FLOAT"));
+    }
+
+    struct FloatTexDescription {
+        raw: RawVertexDescription,
+        tex_coords: VertexAttributeHandle
+    }
+
+    impl FloatTexDescription {
+        fn new() -> Self {
+            let mut raw = RawVertexDescription::new();
+            let tex_coords = raw.add_attribute(
+                &str_ref("texCoords"),
+                DataType::new(FLOAT, VEC2),
+                AttributeKind::FloatTexCoords
+            );
+            Self { raw, tex_coords }
+        }
+    }
+
+    impl VertexDescription for FloatTexDescription {
+        fn get_raw_description(&self) -> &RawVertexDescription {
+            &self.raw
+        }
+    }
+
+    struct FloatTexVertex {
+        tex_coords: Vector2<f32>
+    }
+
+    impl Vertex<FloatTexDescription> for FloatTexVertex {
+        fn store(&self, store: &mut VertexStoreBuilder, description: &FloatTexDescription) {
+            store.put_vec2f(description.tex_coords, self.tex_coords);
+        }
+    }
+
+    #[test]
+    fn test_nan_float_tex_coords() {
+        let vertices = [FloatTexVertex { tex_coords: Vector2 { x: 0.3, y: f32::NAN } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &FloatTexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A float texture coordinate is NaN"));
+    }
+
+    #[test]
+    fn test_small_float_tex_coords() {
+        let vertices = [FloatTexVertex {tex_coords: Vector2 { x: -0.1, y: 0.7 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &FloatTexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A float texture coordinate is smaller than -0.05"));
+    }
+
+    #[test]
+    fn test_big_float_tex_coords() {
+        let vertices = [FloatTexVertex {tex_coords: Vector2 { x: 0.1, y: 1.7 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &FloatTexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("A float texture coordinate is larger than 1.05"));
+    }
+
+    struct IntTexDescription {
+        raw: RawVertexDescription,
+        tex_coords: VertexAttributeHandle
+    }
+
+    impl IntTexDescription {
+        fn new() -> Self {
+            let mut raw = RawVertexDescription::new();
+            let tex_coords = raw.add_attribute(
+                &str_ref("texCoords"),
+                DataType::new(INT, VEC2),
+                AttributeKind::IntTexCoords { texture_size: 32 }
+            );
+            Self { raw, tex_coords }
+        }
+    }
+
+    impl VertexDescription for IntTexDescription {
+        fn get_raw_description(&self) -> &RawVertexDescription {
+            &self.raw
+        }
+    }
+
+    struct IntTexVertex {
+        tex_coords: Vector2<i32>
+    }
+
+    impl Vertex<IntTexDescription> for IntTexVertex {
+        fn store(&self, store: &mut VertexStoreBuilder, description: &IntTexDescription) {
+            store.put_vec2i(description.tex_coords, self.tex_coords);
+        }
+    }
+
+    #[test]
+    fn test_small_int_tex_coords() {
+        let vertices = [IntTexVertex { tex_coords: Vector2 { x: -1, y: 15 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &IntTexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("An IntTexCoords component is negative"));
+    }
+
+    #[test]
+    fn test_big_int_tex_coords() {
+        let vertices = [IntTexVertex { tex_coords: Vector2 { x: 21, y: 32 } }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &IntTexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("An IntTexCoords component is not smaller than the texture size"));
+    }
+
+    #[test]
+    fn test_float_index() {
+        struct FloatIndexDescription {
+            raw: RawVertexDescription,
+            index: VertexAttributeHandle
+        }
+
+        impl FloatIndexDescription {
+            fn new() -> Self {
+                let mut raw = RawVertexDescription::new();
+                let index = raw.add_attribute(
+                    &str_ref("index"),
+                    DataType::new(FLOAT, SINGLE),
+                    AttributeKind::Index { bound: 10 }
+                );
+                Self { raw, index }
+            }
+        }
+
+        impl VertexDescription for FloatIndexDescription {
+            fn get_raw_description(&self) -> &RawVertexDescription {
+                &self.raw
+            }
+        }
+
+        struct FloatIndexVertex {
+            index: i32
+        }
+
+        impl Vertex<FloatIndexDescription> for FloatIndexVertex {
+            fn store(&self, store: &mut VertexStoreBuilder, description: &FloatIndexDescription) {
+                store.put_int(description.index, self.index);
+            }
+        }
+
+        let vertices = [FloatIndexVertex { index: 5 }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &FloatIndexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("An index attribute is not of type INT"))
+    }
+
+    struct IndexDescription {
+        raw: RawVertexDescription,
+        index: VertexAttributeHandle
+    }
+
+    impl IndexDescription {
+        fn new() -> Self {
+            let mut raw = RawVertexDescription::new();
+            let index = raw.add_attribute(
+                &str_ref("index"),
+                DataType::new(INT, SINGLE),
+                AttributeKind::Index { bound: 10 }
+            );
+            Self { raw, index }
+        }
+    }
+
+    impl VertexDescription for IndexDescription {
+        fn get_raw_description(&self) -> &RawVertexDescription {
+            &self.raw
+        }
+    }
+
+    struct IndexVertex {
+        index: i32
+    }
+
+    impl Vertex<IndexDescription> for IndexVertex {
+        fn store(&self, store: &mut VertexStoreBuilder, description: &IndexDescription) {
+            store.put_int(description.index, self.index);
+        }
+    }
+
+    // TODO Unit tests for negative and big indices
 }
