@@ -24,6 +24,11 @@ pub trait Instance: Debug + Send + Sync + 'static {
     /// *Instance* trait itself can stay small.
     fn get_shader_manager(&self) -> Arc<dyn ShaderManager>;
 
+    /// Gets the *Gateway* of this *Instance*. The gateway handles most tasks that require a lot of
+    /// data to be transferred from the CPU to the GPU (like vertices and textures). It is a
+    /// separate trait so that the *Instance* itself can stay small.
+    fn get_gateway(&self) -> Arc<dyn Gateway>;
+
     /// Creates a new *AbstractGridGroup* based on the information provided in the
     /// given *AbstractGridGroupBuilder*. This method will return a tuple of an
     /// *AbstractGridGroup* (within an *Arc*) and *GridGroupIDs*. See the
@@ -65,11 +70,11 @@ mod tests {
     }
 
     impl Instance for DummyInstance {
-        fn as_any(&self) -> &dyn Any {
-            self
+        fn get_shader_manager(&self) -> Arc<dyn ShaderManager> {
+            unimplemented!()
         }
 
-        fn get_shader_manager(&self) -> Arc<dyn ShaderManager> {
+        fn get_gateway(&self) -> Arc<dyn Gateway> {
             unimplemented!()
         }
 
@@ -78,6 +83,10 @@ mod tests {
             _builder: &AbstractGridGroupBuilder,
         ) -> (Arc<dyn AbstractGridGroup>, GridGroupIDs) {
             unimplemented!()
+        }
+
+        fn as_any(&self) -> &dyn Any {
+            self
         }
     }
 

@@ -15,6 +15,7 @@
 /// to find out what this means. If the topology is *Lines*, this means that
 /// it should draw a line between the first vertex and fourth vertex, and a
 /// line between the third vertex and sixth vertex.
+#[derive(Eq, PartialEq, Copy, Clone)]
 pub enum PrimitiveTopology {
     /// A point should be drawn at the location of each vertex
     Points,
@@ -26,14 +27,15 @@ pub enum PrimitiveTopology {
     /// Lines should be drawn between the first and second vertex, the second
     /// and third vertex, the third and fourth vertex...
     ///
-    /// If *primitive_restart* is set to true, it will be possible to finish
-    /// a line strip and begin a new strip. (So you don't need to necessarily
-    /// have 1 big line strip, but you can also use multiple smaller line strips
-    /// instead.) TODO Define how to break them up
-    LineStrips { primitive_restart: bool },
+    /// If there are indices, it will be possible to finish the current line strip and begin a new
+    /// strip. (So you don't need to necessarily have 1 big line strip, but you can also use
+    /// multiple smaller line strips instead.) You can do this by using the special index value
+    /// *usize::max_value()* between the last vertex of a line strip and the first vertex of the
+    /// next line strip.
+    LineStrips,
 
     /// Triangles should be drawn between the first, second, and third vertex,
-    /// between the fourth, fifth, and sixth vertex, between the seventh, eigth,
+    /// between the fourth, fifth, and sixth vertex, between the seventh, eighth,
     /// and ninth vertex...
     Triangles,
 
@@ -41,9 +43,9 @@ pub enum PrimitiveTopology {
     /// between the second, third, and fourth vertex, between the third, fourth,
     /// and fifth vertex...
     ///
-    /// If *primitive_restart* is set to true, it will be possible to finish
-    /// a triangle strip and begin a new strip. (So you don't need to necessarily
-    /// have 1 big triangle strip, but you can also have multiple smaller ones.)
-    /// TODO Define how to break them up
-    TriangleStrips { primitive_restart: bool },
+    /// If there are indices, it will be possible to finish a triangle strip and begin a new strip.
+    /// (So you don't need to necessarily have 1 big triangle strip, but you can also have multiple
+    /// smaller ones.) You can do this by using the special index value *usize::max_value()*
+    /// between the last vertex of a triangle strip and the first vertex of the next triangle strip.
+    TriangleStrips,
 }
