@@ -49,8 +49,11 @@ pub trait ShaderManager: Debug + Send + Sync + 'static {
     /// use std::sync::Arc;
     ///
     /// fn create_simple_vertex_shader(manager: &dyn ShaderManager) -> Arc<dyn VertexShader> {
+    ///     // outputPosition is passed to the hypothetical fragment shader
+    ///     // gl_Position will be the screen position
     ///     let main_function_body = "
     /// outputPosition = finalMatrix() * vec4(position, 1.0);
+    /// gl_Position = outputPosition;
     /// ";
     ///     let other_functions = "
     /// mat4 finalMatrix() {
