@@ -217,8 +217,10 @@ impl VertexStore {
                                 log(&mut writer, log_id, "An index attribute is not of type INT");
                             }
                             for index in int_values {
-                                if index < 0 || index >= bound as i32 {
-                                    log(&mut writer, log_id, "An index attribute is out of range");
+                                if index < 0 {
+                                    log(&mut writer, log_id, "An index attribute is negative");
+                                } else if index >= bound as i32 {
+                                    log(&mut writer, log_id, "An index attribute is not smaller than the bound");
                                 }
                             }
                         }
@@ -234,49 +236,51 @@ impl VertexStore {
              * to debug because all vertices will be mapped to the same screen
              * position, making the entire scene completely invisible.
              */
-            for attribute in description.get_raw_description().get_attributes() {
-                match attribute.get_kind() {
-                    AttributeKind::Position { max: _ } => {
-                        let num_components =
-                            attribute.get_data_type().get_shape().get_size() as usize;
-                        let mut positions = Vec::new();
-                        for vertex_index in 0..vertices.len() {
-                            let vertex_offset = vertex_index * vertex_size;
-                            let position_offset = vertex_offset + attribute.offset;
-                            let mut position = Vec::with_capacity(num_components);
-                            for component_index in 0..num_components {
-                                let mut component_bytes = [0; 4];
-                                for byte_index in 0..4 {
-                                    component_bytes[byte_index] = store_builder.raw_buffer
-                                        [position_offset + 4 * component_index + byte_index];
+            if debug_level == DebugLevel::All {
+                for attribute in description.get_raw_description().get_attributes() {
+                    match attribute.get_kind() {
+                        AttributeKind::Position { max: _ } => {
+                            let num_components =
+                                attribute.get_data_type().get_shape().get_size() as usize;
+                            let mut positions = Vec::new();
+                            for vertex_index in 0..vertices.len() {
+                                let vertex_offset = vertex_index * vertex_size;
+                                let position_offset = vertex_offset + attribute.offset;
+                                let mut position = Vec::with_capacity(num_components);
+                                for component_index in 0..num_components {
+                                    let mut component_bytes = [0; 4];
+                                    for byte_index in 0..4 {
+                                        component_bytes[byte_index] = store_builder.raw_buffer
+                                            [position_offset + 4 * component_index + byte_index];
+                                    }
+                                    position.push(f32::from_ne_bytes(component_bytes));
                                 }
-                                position.push(f32::from_ne_bytes(component_bytes));
+                                positions.push(position);
                             }
-                            positions.push(position);
-                        }
 
-                        let mut many_equals = false;
-                        for position in &positions {
-                            let mut equal_counter = 0;
-                            for other_position in &positions {
-                                if position == other_position {
-                                    equal_counter += 1;
+                            let mut many_equals = false;
+                            for position in &positions {
+                                let mut equal_counter = 0;
+                                for other_position in &positions {
+                                    if position == other_position {
+                                        equal_counter += 1;
+                                    }
+                                }
+                                if equal_counter > vertices.len() / 2 {
+                                    many_equals = true;
                                 }
                             }
-                            if equal_counter > vertices.len() / 2 {
-                                many_equals = true;
+
+                            if many_equals {
+                                log(
+                                    &mut writer,
+                                    log_id,
+                                    "More than half of the vertices has the same position",
+                                );
                             }
                         }
-
-                        if many_equals {
-                            log(
-                                &mut writer,
-                                log_id,
-                                "More than half of the vertices has the same position",
-                            );
-                        }
+                        _ => {}
                     }
-                    _ => {}
                 }
             }
         }

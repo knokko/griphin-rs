@@ -1,10 +1,14 @@
 mod attribute;
 mod description;
 mod store;
+mod usage;
+mod buffer;
 
 pub use attribute::*;
 pub use description::*;
 pub use store::*;
+pub use usage::*;
+pub use buffer::*;
 
 /// Structs implementing this trait represent vertices on the CPU side. They should have attributes
 /// like position and texture coordinates that are meant to be sent to the graphics card, and
@@ -881,5 +885,50 @@ mod tests {
         }
     }
 
-    // TODO Unit tests for negative and big indices
+    #[test]
+    fn test_negative_index() {
+        let vertices = [IndexVertex { index: -1 }, IndexVertex { index: 0 }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &IndexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("An index attribute is negative"));
+    }
+
+    #[test]
+    fn test_big_index() {
+        let vertices = [IndexVertex { index: 5}, IndexVertex { index: 10 }];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &IndexDescription::new(), &vertices,
+            DebugLevel::High, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("An index attribute is not smaller than the bound"));
+    }
+
+    #[test]
+    fn test_many_equal_positions() {
+        let vertices = [
+            PositionVertex { position: Vector2 { x: 1.0, y: 0.0 }},
+            PositionVertex { position: Vector2 { x: 2.0, y: 3.0 }},
+            PositionVertex { position: Vector2 { x: 1.0, y: 0.0 }},
+            PositionVertex { position: Vector2 { x: 1.0, y: 0.0 }}
+        ];
+        let mut output = Vec::new();
+        VertexStore::new(
+            &PositionVertexDescription::new(), &vertices,
+            DebugLevel::All, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.contains("More than half of the vertices has the same position"));
+    }
+
+    // TODO Unit test for correct vertex data (check that no warnings are printed)
+    #[test]
+    fn test_good_vertices() {
+        
+    }
 }
