@@ -929,6 +929,127 @@ mod tests {
     // TODO Unit test for correct vertex data (check that no warnings are printed)
     #[test]
     fn test_good_vertices() {
-        
+        struct GoodVertexDescription {
+            raw: RawVertexDescription,
+            position: VertexAttributeHandle,
+            normal: VertexAttributeHandle,
+            texture_coords: VertexAttributeHandle,
+            height_texture_coords: VertexAttributeHandle,
+            matrix_index: VertexAttributeHandle,
+            random_seed: VertexAttributeHandle
+        }
+
+        impl GoodVertexDescription {
+            fn new() -> Self {
+                let mut raw = RawVertexDescription::new();
+                let position = raw.add_attribute(
+                    &str_ref("position"),
+                    DataType::new(FLOAT, VEC3),
+                    AttributeKind::Position { max: 100.0 }
+                );
+                let normal = raw.add_attribute(
+                    &str_ref("normal"),
+                    DataType::new(FLOAT, VEC3),
+                    AttributeKind::Normal
+                );
+                let texture_coords = raw.add_attribute(
+                    &str_ref("textureCoords"),
+                    DataType::new(INT, VEC2),
+                    AttributeKind::IntTexCoords { texture_size: 64 }
+                );
+                let height_texture_coords = raw.add_attribute(
+                    &str_ref("heightTextureCoords"),
+                    DataType::new(FLOAT, VEC2),
+                    AttributeKind::FloatTexCoords
+                );
+                let matrix_index = raw.add_attribute(
+                    &str_ref("matrixIndex"),
+                    DataType::new(INT, SINGLE),
+                    AttributeKind::Index { bound: 4 }
+                );
+                let random_seed = raw.add_attribute(
+                    &str_ref("randomSeed"),
+                    DataType::new(INT, SINGLE),
+                    AttributeKind::Other
+                );
+                GoodVertexDescription {
+                    raw, position, normal, texture_coords, height_texture_coords,
+                    matrix_index, random_seed
+                }
+            }
+        }
+
+        impl VertexDescription for GoodVertexDescription {
+            fn get_raw_description(&self) -> &RawVertexDescription {
+                &self.raw
+            }
+        }
+
+        struct GoodVertex {
+            position: Vector3<f32>,
+            normal: Vector3<f32>,
+            texture_coords: Vector2<i32>,
+            height_texture_coords: Vector2<f32>,
+            matrix_index: i32,
+            random_seed: i32
+        }
+
+        impl Vertex<GoodVertexDescription> for GoodVertex {
+            fn store(&self, store: &mut VertexStoreBuilder, description: &GoodVertexDescription) {
+                store.put_vec3f(description.position, self.position);
+                store.put_vec3f(description.normal, self.normal);
+                store.put_vec2i(description.texture_coords, self.texture_coords);
+                store.put_vec2f(description.height_texture_coords, self.height_texture_coords);
+                store.put_int(description.matrix_index, self.matrix_index);
+                store.put_int(description.random_seed, self.random_seed);
+            }
+        }
+
+        let vertices = [
+            GoodVertex {
+                position: Vector3 { x: 0.0, y: 0.0, z: 0.0 },
+                normal: Vector3 { x: 0.0, y: 1.0, z: 0.0 },
+                texture_coords: Vector2 { x: 0, y: 0 },
+                height_texture_coords: Vector2 { x: 0.2, y: 0.2 },
+                matrix_index: 0,
+                random_seed: 9349
+            },
+            GoodVertex {
+                position: Vector3 { x: 10.0, y: 0.0, z: -1.0 },
+                // Normal length edge case
+                normal: Vector3 { x: 0.0, y: 1.024, z: 0.0 },
+                texture_coords: Vector2 { x: 63, y: 0 },
+                height_texture_coords: Vector2 { x: 0.6, y: 0.2 },
+                matrix_index: 1,
+                random_seed: 37567
+            },
+            GoodVertex {
+                position: Vector3 { x: 12.0, y: 0.0, z: -11.0 },
+                normal: Vector3 { x: 0.0, y: 1.0, z: 0.0 },
+                texture_coords: Vector2 { x: 63, y: 63 },
+                height_texture_coords: Vector2 { x: 0.6, y: 0.6 },
+                matrix_index: 2,
+                random_seed: 9318334
+            },
+            GoodVertex {
+                // Its allowed that half the vertices have the same position
+                position: Vector3 { x: 12.0, y: 0.0, z: -11.0 },
+                // Normal length edge case
+                normal: Vector3 { x: 0.0, y: 0.975, z: 0.0 },
+                texture_coords: Vector2 { x: 0, y: 63},
+                // Float tex coords edge case
+                height_texture_coords: Vector2 { x: 0.7, y: 1.0 },
+                matrix_index: 2,
+                random_seed: 0
+            }
+        ];
+
+        let mut output = Vec::new();
+        VertexStore::new(
+            &GoodVertexDescription::new(), &vertices,
+            DebugLevel::All, Some(&mut output)
+        );
+        let output_string = String::from_utf8(output).unwrap();
+        assert!(output_string.is_empty());
     }
 }
