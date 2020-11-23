@@ -23,6 +23,19 @@ pub trait AbstractGridGroup {
     /// the implementation-specific struct that implements this trait.
     fn as_any(&self) -> &dyn Any;
 
+    /// Gets the total number of grids this *AbstractGridGroup* (and each concrete
+    /// *GridGroup* created by this abstract group) has has. This is always the sum of
+    /// *get_num_colors_grids* and *get_num_depth_stencil_grids*.
+    fn get_num_grids(&self) -> u32;
+
+    /// Gets the number of color grids this *AbstractGridGroup* (and each concrete *GridGroup*
+    /// created by this abstract group) has
+    fn get_num_color_grids(&self) -> u32;
+
+    /// Gets the number of depth-stencil grids this *AbstractGridGroup* (and each concrete
+    /// *GridGroup* created by this abstract group) has
+    fn get_num_depth_stencil_grids(&self) -> u32;
+
     /// Creates a concrete *GridGroup* based on this *AbstractGridGroup*, with the
     /// given *width* and *height*.
     ///
@@ -54,6 +67,17 @@ pub trait AbstractGridGroup {
     /// same *AbstractGridGroup* and only *GraphicsPipeline*s created by this same
     /// *AbstractGridGroup* can be used during the *RenderFlow*.
     fn create_render_flow(&self, builder: RenderFlowBuilder) -> Arc<dyn RenderFlow>;
+}
+
+#[derive(Debug, Hash, Eq, PartialEq, Copy, Clone)]
+pub struct AbstractGridGroupID {
+    id_value: u32
+}
+
+impl AbstractGridGroupID {
+    pub fn new(id_value: u32) -> Self {
+        Self { id_value }
+    }
 }
 
 /// Represents a concrete instance of an *AbstractGridGroup*. Unlike its abstact

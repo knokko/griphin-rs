@@ -1,3 +1,5 @@
+use crate::AbstractGridGroupID;
+
 /// Represents the id and 'handle' of an abstract grid (can be either an
 /// *AbstractColorGrid* or an *AbstractDepthStencilGrid*). This handle has
 /// multiple purposes (currently only 2), which are listed below:
@@ -14,16 +16,16 @@
 /// *AbstractGridID*s you need from there.
 ///
 /// Only Griphin implementations should create instances of this struct.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Hash, Clone, Copy, PartialEq, Eq)]
 pub struct AbstractGridID {
-    group_id: u32,
+    group_id: AbstractGridGroupID,
     local_id: u16,
 }
 
 impl AbstractGridID {
     /// Creates a new *AbstractGridID*. This should only be used by Griphin
     /// implementations.
-    pub fn new(group_id: u32, local_id: u16) -> Self {
+    pub fn new(group_id: AbstractGridGroupID, local_id: u16) -> Self {
         Self { group_id, local_id }
     }
 
@@ -31,7 +33,7 @@ impl AbstractGridID {
     /// identifier for the *AbstractGridGroup* that owns this abstract grid.
     ///
     /// This should only be used by implementations of Griphin.
-    pub fn get_group_id(&self) -> u32 {
+    pub fn get_group_id(&self) -> AbstractGridGroupID {
         self.group_id
     }
 

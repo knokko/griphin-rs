@@ -1,14 +1,12 @@
 use std::any::Any;
 
 mod builder;
-mod input;
-mod node;
-mod output;
+mod grid;
+mod render_task;
 
 pub use builder::*;
-pub use input::*;
-pub use node::*;
-pub use output::*;
+pub use grid::*;
+pub use render_task::*;
 
 /// A directed acyclic graph that specifies which graphics pipelines should be
 /// used to draw at which grids at which moments. See the documentation of
